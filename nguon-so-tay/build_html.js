@@ -2,13 +2,29 @@ const fs = require('fs');
 const path = require('path');
 const D = require('./data.js');
 const { signSvg, auxSvg, ICONS } = require('./signs.js');
+const E = require('./data2.js');
+const { D: DG, STACKS } = require('./diagrams.js');
 
 const OUT = process.argv[2] || path.join(__dirname, 'tra-cuu.html');
 const svgs = {};
 Object.keys(ICONS).forEach((k) => { svgs[k] = signSvg(k, k); });
 svgs.aux = auxSvg('6h–9h');
 
-const DATA = { ...D, SVG: svgs };
+const diag = {}; Object.keys(DG).forEach((k) => { diag[k] = DG[k](); }); Object.keys(STACKS).forEach((k) => { diag[k] = STACKS[k](); });
+const CAP = {
+  m_yellow_dash: 'Vạch 1.1 vàng đứt: được cắt qua để vượt khi an toàn.', m_yellow_solid: 'Vạch 1.2 vàng liền: không lấn, không đè vạch.',
+  m_yellow_double: 'Vạch 1.3 vàng kép liền: cả hai chiều không được cắt qua.', m_yellow_mixed: 'Vạch 1.4 liền + đứt: phía vạch đứt được cắt qua, phía vạch liền thì không.',
+  m_white_dash: 'Vạch 2.1 trắng đứt: được chuyển làn.', m_white_solid: 'Vạch 2.2 trắng liền: không chuyển làn.',
+  m_multi_lane: 'Mỗi lần chỉ chuyển sang một làn liền kề.', m_bus_lane: 'Vạch 2.3 liền giới hạn làn dành riêng: xe khác không đi vào.',
+  m_edge: 'Vạch 3.1 mép phần xe chạy: được đè khi cần thiết, nhường xe thô sơ.', m_hatch: 'Vạch 4.1 gạch chéo: không đi vào, trừ trường hợp khẩn cấp.',
+  m_box: 'Vạch 4.4 mắt võng vàng: không dừng trong ô.', m_curb: 'Vạch 6.1 vàng đứt: cấm đỗ. Vạch 6.2 vàng liền: cấm dừng và đỗ.',
+  m_stop_zebra: 'Vạch 7.1 dừng xe và 7.3 người đi bộ.', m_giveway: 'Vạch 7.2 nhường đường: đi chậm hoặc dừng nhường.',
+  m_zigzag: 'Vạch 9.2 zigzag: không dừng, đỗ trong phạm vi vạch và 15 m hai đầu.', m_lane_arrows: 'Vạch 9.3 mũi tên: đi theo hướng mũi tên của làn.',
+  x_red_arrow: 'Mũi tên xanh cùng đèn đỏ: đi theo mũi tên, nhường xe đang được đi.', x_pass_right: 'Được vượt bên phải khi xe trước báo rẽ trái hoặc đang rẽ trái.',
+  x_uturn_arrow: 'Biển P.123a cấm rẽ trái không cấm quay đầu.', x_breakdown_highway: 'Xe hỏng trên cao tốc: làn khẩn cấp, đèn khẩn cấp, biển cách ≥ 150 m.',
+  x_accident_scene: 'Hiện trường va chạm: cảnh báo, giữ nguyên, chụp ảnh, đánh dấu bánh xe.',
+};
+const DATA = { ...D, ...E, SVG: svgs, DIAG: diag, CAP };
 const json = JSON.stringify(DATA).replace(/</g, '\\u003c');
 
 const html = `<title>Lái Xe Ô Tô – Tra Cứu Nhanh</title>
@@ -122,6 +138,14 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
 .light{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
 .dot{width:18px;height:18px;border-radius:50%;margin-top:3px;border:2px solid var(--line)}
 
+/* Sơ đồ */
+.figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:12px}
+figure.fig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+figure.fig svg{display:block;width:100%;height:auto}
+figure.fig figcaption{padding:8px 12px;font-size:13px;color:var(--muted)}
+.mk-ok{color:var(--ok);font-weight:700} .mk-no{color:var(--crit);font-weight:700} .mk-mid{color:var(--warn);font-weight:700}
+.stack{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.stack svg{width:72px;height:90px;display:block}
 /* Kỹ thuật */
 details.acc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 details.acc+details.acc{margin-top:8px}
@@ -158,9 +182,12 @@ footer{font-size:12.5px;color:var(--muted);padding-block:16px 32px;border-top:1p
     <nav class="tabs" aria-label="Mục tra cứu">
       <a href="#muc-phat">Mức phạt</a>
       <a href="#bien-bao">Biển báo</a>
+      <a href="#vach-ke">Vạch kẻ</a>
+      <a href="#ngoai-le">Ngoại lệ</a>
       <a href="#toc-do">Tốc độ</a>
       <a href="#ky-thuat">Kỹ thuật lái</a>
-      <a href="#tinh-huong">Tình huống</a>
+      <a href="#tai-nan">Tai nạn & bảo hiểm</a>
+      <a href="#tinh-huong">Sự cố</a>
       <a href="#kinh-nghiem">Kinh nghiệm</a>
       <a href="#checklist">Checklist</a>
       <a href="#nguon">Nguồn</a>
@@ -238,10 +265,13 @@ function viewSigns(){
   + '<div class="panel"><h3>Năm nhóm biển</h3><div style="display:grid;gap:12px">' + D.SIGN_GROUPS.map(g => '<div class="shape">'+(gIcon[g[0]]==='aux'?D.SVG.aux.replace('<svg ','<svg style="width:52px;height:26px" '):D.SVG[gIcon[g[0]]])+'<div><b>'+esc(g[0])+'</b> <span class="tag exp">'+esc(g[1])+'</span><div class="src" style="margin-top:2px">'+esc(g[2])+'. '+esc(g[3])+'</div></div></div>').join('') + '</div></div></div>'
   + '<div><div class="chips" id="sg" role="group" aria-label="Lọc biển"></div></div><div class="signs" id="signs"></div>'
   + '<div><h3>Biển cấm có hiệu lực từ đâu đến đâu?</h3>' + table(['Trường hợp','Quy tắc','QCVN 41'], D.SIGN_SCOPE.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + '</div>'
-  + '<div><h3>Biển phụ</h3>' + table(['Mã','Tên','Tác dụng'], D.AUX_SIGNS.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + src('QCVN 41:2024 Điều 41') + '</div>'
+  + '<div><h3>Đọc biển phụ theo 6 bước</h3>' + table(['Bước','Biển phụ trả lời'], D.AUX_HOWTO.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1])])) + '</div>'
+  + '<div><h3>Ví dụ biển ghép (minh họa)</h3><div class="grid2">' + D.AUX_EXAMPLES.map(x => '<div class="stack">'+D.DIAG[x[0]]+'<div><b>'+esc(x[1])+'</b><div class="src" style="margin-top:4px">'+esc(x[2])+'</div></div></div>').join('') + '</div></div>'
+  + '<div class="note warn"><b>Dễ nhầm:</b> S.505a "Loại xe" thì biển chính CHỈ áp dụng cho loại xe vẽ trên biển phụ. S.H,6 "Except – Ngoại lệ" thì loại xe vẽ trên biển phụ ĐƯỢC MIỄN.</div>'
+  + '<div><h3>Danh mục biển phụ</h3>' + table(['Mã','Tên','Tác dụng'], D.AUX_SIGNS.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + src('QCVN 41:2024 Điều 41, Phụ lục F') + '</div>'
   + '<div class="grid2"><div class="panel"><h3>Đèn tín hiệu</h3><div class="lights">' + D.LIGHTS.map(l => { const c = /Xanh|xanh/.test(l[0]) ? '#2E9D4A' : /Vàng/.test(l[0]) ? '#F2B600' : '#D2302A'; return '<div class="light"><span class="dot" style="background:'+c+'"></span><div><b>'+esc(l[0])+'</b>: '+esc(l[1])+'</div></div>'; }).join('') + '</div>'+src('Luật 36 Đ11 k4; QCVN 41:2024 Điều 6')+'</div>'
   + '<div class="panel"><h3>Hiệu lệnh của CSGT</h3>' + D.POLICE.map(p => '<p style="margin-bottom:8px"><b>'+esc(p[0])+':</b> '+esc(p[1])+'</p>').join('') + src('Luật 36 Đ11 k3') + '<h3 style="margin-top:14px">Nhường đường</h3>' + D.YIELD_RULES.map(p => '<p style="margin-bottom:6px"><b>'+esc(p[0])+':</b> '+esc(p[1])+'</p>').join('') + src('Luật 36 Đ15, Đ17, Đ22') + '</div></div>'
-  + '<div><h3>Vạch kẻ đường</h3>' + table(['Loại vạch','Ý nghĩa'], D.MARKINGS.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1])])) + src('QCVN 41:2024 Điều 49–50; không chấp hành vạch: 400–600 nghìn (NĐ 168 Đ6 k1a)') + '</div>'
+  + '<div class="note">Vạch kẻ đường có tab riêng kèm sơ đồ: <a href="#vach-ke">mở tab Vạch kẻ</a>. Các trường hợp "trừ khi…": <a href="#ngoai-le">mở tab Ngoại lệ</a>.</div>'
   + '</section>';
   const groups = [['P','Cấm'],['R','Hiệu lệnh'],['W','Nguy hiểm'],['I','Chỉ dẫn'],['all','Tất cả']];
   const sg = $('#sg');
@@ -307,6 +337,46 @@ function viewEmergency(){
   + '</section>';
 }
 
+
+// ---------------- VẠCH KẺ
+const fig = (k) => '<figure class="fig">'+(D.DIAG[k]||'')+'<figcaption>'+esc(D.CAP[k]||'')+'</figcaption></figure>';
+const mkClass = (c) => /^Cấm/.test(c) ? 'mk-no' : /^Được/.test(c) ? 'mk-ok' : 'mk-mid';
+function viewMarkings(){
+  app.innerHTML = '<section class="view" aria-labelledby="h-mk">'
+  + '<div><h2 class="sec" id="h-mk">Vạch kẻ đường</h2><p class="lead">Theo QCVN 41:2024 Phụ lục G. Cột cuối cho biết có được cắt qua, đè lên vạch hay không. Sơ đồ là hình vẽ minh họa nhìn từ trên xuống: xanh là được, đỏ là không được.</p></div>'
+  + '<div class="figs">' + ['m_yellow_dash','m_yellow_solid','m_yellow_double','m_yellow_mixed','m_white_dash','m_white_solid','m_multi_lane','m_bus_lane','m_edge','m_hatch','m_box','m_curb','m_stop_zebra','m_giveway','m_zigzag','m_lane_arrows'].map(fig).join('') + '</div>'
+  + D.MARKINGS_G.map(g => '<div><h3>'+esc(g.grp)+'</h3>' + table(['Mã','Vạch','Màu','Quy định','Được cắt, đè?'], g.rows.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2]),esc(r[3]),'<span class="'+mkClass(r[4])+'">'+esc(r[4])+'</span>'])) + '</div>').join('')
+  + src('QCVN 41:2024/BGTVT Điều 48–51, Phụ lục G')
+  + '<div class="panel"><h3>Cần nhớ</h3>' + dots(D.MARKING_NOTES) + '</div>'
+  + '</section>';
+}
+// ---------------- NGOẠI LỆ
+function viewExceptions(){
+  app.innerHTML = '<section class="view" aria-labelledby="h-ex">'
+  + '<div><h2 class="sec" id="h-ex">Khi nào được phép? Các ngoại lệ</h2><p class="lead">Gom các trường hợp "trừ khi…" có trong Luật 36/2024, NĐ 168/2024 và QCVN 41:2024. Quy tắc không có trong danh sách thì coi là không có ngoại lệ.</p></div>'
+  + D.EXCEPTIONS.map(g => { const figs = g.rows.map(r=>r[3]).filter(Boolean); return '<div><h3>'+esc(g.grp)+'</h3>' + table(['Quy định chung','Được phép khi','Căn cứ'], g.rows.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + (figs.length?'<div class="figs" style="margin-top:10px">'+figs.map(fig).join('')+'</div>':'') + '</div>'; }).join('')
+  + '<div class="note warn"><b>Không chắc có thuộc ngoại lệ không?</b> Ngoại lệ chỉ áp dụng đúng như văn bản ghi. Hiệu lệnh CSGT và biển tạm thời là cách hợp pháp để đi khác biển, vạch cố định. Không chắc thì chọn phương án an toàn hơn.</div>'
+  + '</section>';
+}
+// ---------------- TAI NẠN & BẢO HIỂM
+function viewAccident(){
+  const ck = (id, items) => '<div class="check">' + items.map((t,i)=>'<label for="'+id+i+'"><input type="checkbox" id="'+id+i+'"><span>'+esc(t)+'</span></label>').join('') + '</div>';
+  app.innerHTML = '<section class="view" aria-labelledby="h-acc">'
+  + '<div><h2 class="sec" id="h-acc">Xảy ra tai nạn: làm gì, theo thứ tự nào</h2><p class="lead">Căn cứ Luật 36/2024 Điều 80–83, Thông tư 72/2024/TT-BCA, Nghị định 67/2023/NĐ-CP về bảo hiểm bắt buộc, BLDS và BLHS.</p></div>'
+  + '<div class="sos">' + D.EMERGENCY_NUMBERS.map(n => '<div><b>'+n[0]+'</b><span>'+esc(n[1])+'</span></div>').join('') + '<div style="background:var(--accent-soft)"><b style="color:var(--accent);font-size:20px">Bảo hiểm</b><span>Số đường dây nóng in trên giấy chứng nhận bảo hiểm của bạn</span></div></div>'
+  + '<div class="grid3" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))">' + D.ACC_PRINCIPLES.map((p,i)=>'<div class="panel"><div class="eyebrow">Nguyên tắc '+(i+1)+'</div><h3 style="margin-top:4px">'+esc(p[0])+'</h3><p style="font-size:14px">'+esc(p[1])+'</p></div>').join('') + '</div>'
+  + '<div class="figs">' + fig('x_accident_scene') + fig('x_breakdown_highway') + '</div>'
+  + '<div><h3>Trình tự theo thời gian</h3>' + D.ACC_TIMELINE.map((ph,i)=>acc(ph.phase, steps(ph.steps), i===0)).join('') + src('Luật 36 Đ25, Đ80–83; TT 72/2024/TT-BCA; NĐ 67/2023 Đ12') + '</div>'
+  + '<div><h3>Theo từng tình huống</h3>' + table(['Tình huống','Cách xử lý','Căn cứ'], D.ACC_SCENARIOS.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + '</div>'
+  + '<div class="grid2"><div class="panel"><h3>Chứng cứ cần thu thập</h3>' + ck('ev', D.ACC_EVIDENCE) + '</div><div class="panel"><h3>Văn bản tự thỏa thuận nên có</h3>' + ck('ag', D.ACC_AGREEMENT) + '<p class="src">Pháp luật không cấm tự thỏa thuận. Vụ chỉ thiệt hại tài sản không đáng kể: các bên có thể đề nghị thỏa thuận dân sự tại hiện trường; CSGT vẫn lập biên bản, báo cáo đề xuất trong 07 ngày làm việc (TT 72/2024). Gọi bảo hiểm trước khi chốt số tiền.</p></div></div>'
+  + '<div><h3>Bảo hiểm bắt buộc trách nhiệm dân sự</h3>' + table(['Nội dung','Quy định','Căn cứ'], D.INS_TNDS.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + '</div>'
+  + '<div class="grid2"><div class="panel"><h3>Bảo hiểm bắt buộc KHÔNG bồi thường khi</h3>' + dots(D.INS_EXCLUSIONS) + src('NĐ 67/2023 Đ7 k2') + '</div><div class="panel"><h3>Hồ sơ bồi thường</h3>' + D.INS_DOCS.map(r=>'<p style="margin-bottom:8px"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</p>').join('') + src('NĐ 67/2023 Đ13') + '</div></div>'
+  + '<div><h3>Bảo hiểm vật chất xe (tự nguyện)</h3>' + table(['Nội dung','Thông tin'], D.INS_VCX.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1])])) + '<p class="src">Thông tin chung; điều kiện cụ thể theo hợp đồng của bạn.</p></div>'
+  + '<div><h3>Trách nhiệm pháp lý</h3>' + table(['Loại','Nội dung'], D.LIABILITY.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1])])) + src('NĐ 168/2024 Đ6; BLDS 2015 Đ601; BLHS 2015 (sửa đổi 2017) Đ260') + '</div>'
+  + '<div class="grid2"><div class="panel"><h3>Tuyệt đối không làm</h3>' + D.ACC_DONTS.map(r=>'<p style="margin-bottom:8px"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</p>').join('') + '</div><div class="panel"><h3>Sơ cứu ở mức an toàn</h3>' + D.FIRST_AID.map(r=>'<p style="margin-bottom:8px"><b>'+esc(r[0])+':</b> '+esc(r[1])+'</p>').join('') + '<p class="src">Khuyến cáo sơ cứu phổ biến, không phải quy định pháp luật.</p></div></div>'
+  + '</section>';
+}
+
 // ---------------- KINH NGHIỆM
 function viewExp(){
   app.innerHTML = '<section class="view" aria-labelledby="h-exp">'
@@ -339,7 +409,7 @@ function viewSources(){
   + '</section>';
 }
 
-const VIEWS = { 'muc-phat': viewFines, 'bien-bao': viewSigns, 'toc-do': viewSpeed, 'ky-thuat': viewTech, 'tinh-huong': viewEmergency, 'kinh-nghiem': viewExp, 'checklist': viewCheck, 'nguon': viewSources };
+const VIEWS = { 'muc-phat': viewFines, 'bien-bao': viewSigns, 'vach-ke': viewMarkings, 'ngoai-le': viewExceptions, 'tai-nan': viewAccident, 'toc-do': viewSpeed, 'ky-thuat': viewTech, 'tinh-huong': viewEmergency, 'kinh-nghiem': viewExp, 'checklist': viewCheck, 'nguon': viewSources };
 function route(){
   const h = (location.hash || '').slice(1);
   const key = VIEWS[h] ? h : 'muc-phat';

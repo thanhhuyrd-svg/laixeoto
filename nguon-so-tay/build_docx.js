@@ -6,6 +6,7 @@ const {
   PageNumber, TableOfContents, VerticalAlign, TableLayoutType,
 } = require('docx');
 const D = require('./data.js');
+const E = require('./data2.js');
 
 const OUT = process.argv[2] || path.join(__dirname, 'out.docx');
 const PNG = (k) => fs.readFileSync(path.join(__dirname, 'png', k + '.png'));
@@ -85,6 +86,54 @@ function callout(title, lines, kind = 'info') {
 const gap = () => new Paragraph({ spacing: { after: 120 }, children: [] });
 const img = (k, w = 42, h = 42) => new ImageRun({ type: 'png', data: PNG(k), transformation: { width: w, height: h }, altText: { title: k, description: 'Minh họa biển ' + k, name: k } });
 
+
+const CAP = {
+  m_yellow_dash: 'Vạch 1.1 vàng đứt: được cắt qua để vượt khi an toàn.',
+  m_yellow_solid: 'Vạch 1.2 vàng liền: không lấn, không đè vạch.',
+  m_yellow_double: 'Vạch 1.3 vàng kép liền: cả hai chiều không được cắt qua.',
+  m_yellow_mixed: 'Vạch 1.4 liền + đứt: phía vạch đứt được cắt qua, phía vạch liền thì không.',
+  m_white_dash: 'Vạch 2.1 trắng đứt: được chuyển làn.',
+  m_white_solid: 'Vạch 2.2 trắng liền: không chuyển làn.',
+  m_multi_lane: 'Mỗi lần chỉ chuyển sang một làn liền kề (Luật 36 Đ13 k2).',
+  m_bus_lane: 'Vạch 2.3 liền giới hạn làn dành riêng: xe khác không đi vào.',
+  m_edge: 'Vạch 3.1 mép phần xe chạy: được đè khi cần thiết, nhường xe thô sơ.',
+  m_hatch: 'Vạch 4.1 gạch chéo: không đi vào, trừ trường hợp khẩn cấp.',
+  m_box: 'Vạch 4.4 mắt võng vàng: không dừng trong ô.',
+  m_curb: 'Vạch 6.1 vàng đứt: cấm đỗ. Vạch 6.2 vàng liền: cấm dừng và đỗ.',
+  m_stop_zebra: 'Vạch 7.1 dừng xe và 7.3 người đi bộ.',
+  m_giveway: 'Vạch 7.2 nhường đường: đi chậm hoặc dừng nhường.',
+  m_zigzag: 'Vạch 9.2 zigzag: không dừng, đỗ trong phạm vi vạch và 15 m hai đầu.',
+  m_lane_arrows: 'Vạch 9.3 mũi tên: đi theo hướng mũi tên của làn.',
+  x_red_arrow: 'Mũi tên xanh cùng đèn đỏ: đi theo mũi tên, nhường xe đang được đi.',
+  x_pass_right: 'Được vượt bên phải khi xe trước báo rẽ trái hoặc đang rẽ trái.',
+  x_uturn_arrow: 'Biển P.123a cấm rẽ trái không cấm quay đầu.',
+  x_breakdown_highway: 'Xe hỏng trên cao tốc: làn khẩn cấp, đèn khẩn cấp, biển cách ≥ 150 m.',
+  x_accident_scene: 'Hiện trường va chạm: cảnh báo, giữ nguyên, chụp ảnh, đánh dấu bánh xe.',
+};
+function figGrid(keys, w = 300) {
+  const cw = Math.floor(TW / 2);
+  const rows = [];
+  for (let i = 0; i < keys.length; i += 2) {
+    const pair = keys.slice(i, i + 2);
+    rows.push(new TableRow({ cantSplit: true, children: [0, 1].map((j) => {
+      const k = pair[j];
+      if (!k) return new TableCell({ children: [new Paragraph({ children: [] })], width: { size: cw, type: WidthType.DXA }, borders: { top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' } } });
+      return new TableCell({ width: { size: cw, type: WidthType.DXA }, borders: { top: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, bottom: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' }, right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' } }, margins: { top: 60, bottom: 100, left: 60, right: 60 },
+        children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: 'png', data: PNG(k), transformation: { width: w, height: Math.round(w * 0.6) }, altText: { title: k, description: CAP[k] || k, name: k } })] }),
+          new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 40, after: 60 }, children: [run(CAP[k] || '', { size: 17, italics: true, color: '3A4652' })] })] });
+    }) }));
+  }
+  return new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: [cw, TW - cw], rows });
+}
+function stackGrid(examples) {
+  const W = [1700, 2600, 5338];
+  const head = new TableRow({ tableHeader: true, children: ['Biển', 'Tổ hợp', 'Cách hiểu'].map((h, i) => cell(h, W[i], { bold: true, fill: C.head, color: C.navy })) });
+  const rows = examples.map(([k, a, b], ri) => new TableRow({ cantSplit: true, children: [
+    cell(new Paragraph({ alignment: AlignmentType.CENTER, children: [new ImageRun({ type: 'png', data: PNG(k), transformation: { width: 64, height: 80 }, altText: { title: k, description: a, name: k } })] }), W[0], { fill: ri % 2 ? C.zebra : undefined, valign: VerticalAlign.CENTER }),
+    cell(a, W[1], { bold: true, fill: ri % 2 ? C.zebra : undefined }), cell(b, W[2], { fill: ri % 2 ? C.zebra : undefined })] }));
+  return new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: W, rows: [head, ...rows], layout: TableLayoutType.FIXED });
+}
+
 // ---- Content
 const body = [];
 
@@ -105,8 +154,8 @@ body.push(
   ], [2600, 7000], { boldFirst: true }),
   gap(),
   callout('Cách dùng sổ tay', [
-    'Đọc tuần tự Phần A trước khi tập lái. Phần B và C dùng để tra cứu khi gặp biển lạ hoặc cần biết mức phạt.',
-    'Phần D là những gì người lái lâu năm muốn dặn người mới. Trang cuối có checklist để in và để trong xe.',
+    'Đọc tuần tự Phần A trước khi tập lái. Phần B (báo hiệu), C (ngoại lệ) và D (mức phạt) dùng để tra cứu khi gặp biển lạ, vạch lạ hoặc cần biết mức phạt.',
+    'Phần E hướng dẫn từng bước khi xảy ra tai nạn và cách làm việc với bảo hiểm. Phần F là kinh nghiệm của người lái lâu năm, kèm checklist để in và để trong xe.',
     'Đi kèm sổ tay là trang Tra cứu nhanh (file HTML) có ô tìm kiếm mức phạt, dùng tốt trên điện thoại.',
   ]),
   new Paragraph({ children: [new PageBreak()] }),
@@ -244,19 +293,27 @@ body.push(P('Đây là phần người mới hay nhầm nhất: một biển c�
 body.push(table(['Trường hợp', 'Quy tắc', 'Điều'], D.SIGN_SCOPE, [2400, 6100, 1100], { boldFirst: true }));
 body.push(src('QCVN 41:2024/BGTVT Điều 15, 26'));
 
-body.push(H2('B6. Biển phụ và cách đọc biển kết hợp'));
-body.push(P('Biển phụ đặt ngay dưới biển chính để thu hẹp hoặc nói rõ phạm vi áp dụng. Đọc biển chính trước, sau đó đọc biển phụ để biết áp dụng cho ai, lúc nào, ở đâu, bao xa.'));
+body.push(H2('B6. Biển phụ: cách đọc và cách hiểu biển ghép'));
+body.push(P('Biển phụ đặt ngay dưới biển chính (trừ S.507 "Hướng rẽ" dùng độc lập) để thuyết minh, bổ sung hoặc thu hẹp ý nghĩa biển chính. Đọc lần lượt theo các câu hỏi dưới đây.'));
+body.push(table(['Bước đọc', 'Biển phụ trả lời'], E.AUX_HOWTO, [2700, 6900], { boldFirst: true }));
+body.push(src('QCVN 41:2024/BGTVT Điều 41, Phụ lục F'));
+body.push(H3('Danh mục biển phụ'));
 body.push(table(['Mã', 'Tên biển phụ', 'Tác dụng'], D.AUX_SIGNS, [1500, 3000, 5100], { boldFirst: true }));
-body.push(src('QCVN 41:2024/BGTVT Điều 41'));
-body.push(H3('Ví dụ đọc biển kết hợp'));
+body.push(H3('Ví dụ đọc biển ghép (minh họa)'));
+body.push(stackGrid(E.AUX_EXAMPLES));
+body.push(gap());
+body.push(callout('Hai biển phụ dễ nhầm nhất', [
+  'S.505a "Loại xe": biển chính CHỈ áp dụng cho loại xe vẽ trên biển phụ. Ví dụ P.103a (cấm ô tô) + hình xe tải: chỉ cấm xe tải.',
+  'S.H,6 "Except – Ngoại lệ": loại xe vẽ trên biển phụ ĐƯỢC MIỄN. Ví dụ P.103a + "Ngoại lệ" hình xe buýt: cấm mọi ô tô trừ xe buýt.',
+  'Biển phụ thời gian S.508 có thể ghi giờ, ngày chẵn, ngày lẻ hoặc thứ trong tuần. Hết thời gian ghi trên biển phụ thì biển chính hết hiệu lực.',
+], 'warn'));
+body.push(H3('Một số ví dụ khác'));
 [
-  ['P.131a + S.508 "6h–9h, 16h–19h"', 'Chỉ cấm đỗ trong hai khung giờ đó; ngoài giờ được đỗ (nếu không có cấm khác).'],
-  ['P.103a + S.508 "6h–20h"', 'Ô tô không được đi vào đường đó từ 6h đến 20h. Đi vào trong giờ cấm: 4–6 triệu, trừ 2 điểm.'],
-  ['P.106a + S.505a có hình xe tải', 'Biển phụ loại xe chỉ rõ đối tượng; ô tô con không bị cấm.'],
-  ['W.205a + S.502 "150 m"', 'Còn 150 m nữa đến nơi giao nhau: bắt đầu giảm tốc, chọn làn.'],
   ['P.127 "60" đặt trước một ngã tư', 'Giới hạn 60 km/h hết hiệu lực ở nơi giao nhau tiếp theo nếu không có biển nhắc lại; sau đó áp dụng tốc độ mặc định theo khu vực.'],
-  ['P.123a trên giá long môn, chỉ phía trên làn trái', 'Chỉ làn đó bị cấm rẽ trái. Biển trên làn có hiệu lực cho làn được chỉ.'],
-  ['P.123a ở ngã tư, không có P.124', 'Cấm rẽ trái nhưng vẫn được quay đầu (nếu không có biển, vạch hay đèn cấm khác).'],
+  ['P.127a (tốc độ tối đa ban đêm)', 'Trị số không lớn hơn 80 km/h, hiệu lực trong khu đông dân cư đến biển R.421; gặp biển P.127 thì theo P.127.'],
+  ['P.123a trên giá long môn, chỉ phía trên làn trái', 'Chỉ làn đó bị cấm rẽ trái; biển cấm và hiệu lệnh có thể chỉ áp dụng cho một số làn.'],
+  ['P.123a ở ngã tư, không có P.124', 'Cấm rẽ trái nhưng vẫn được quay đầu (nếu không có biển, vạch 9.1 hay đèn cấm khác).'],
+  ['P.130 cắm bên phải đường', 'Chỉ cấm dừng, đỗ ở phía đường có đặt biển; phía bên kia đường không bị biển này điều chỉnh.'],
 ].forEach(([a, b]) => body.push(bullet([run(a + ': ', { bold: true }), run(b)])));
 
 body.push(H2('B7. Biển báo thường gặp'));
@@ -281,9 +338,21 @@ signGroups.forEach(([g, title]) => {
 });
 body.push(src('QCVN 41:2024/BGTVT; mức phạt theo NĐ 168/2024/NĐ-CP Điều 6'));
 
-body.push(H2('B8. Vạch kẻ đường'));
-body.push(table(['Loại vạch', 'Ý nghĩa và cách chấp hành'], D.MARKINGS, [3000, 6600], { boldFirst: true }));
-body.push(src('QCVN 41:2024 Điều 49–50 (nguyên tắc chung); chi tiết từng vạch tại Phụ lục G của quy chuẩn. Không chấp hành vạch kẻ: 400–600 nghìn (NĐ 168 Đ6 k1a)'));
+body.push(H2('B8. Vạch kẻ đường theo QCVN 41:2024 (Phụ lục G)'));
+body.push(P('Bảng dưới trích sát nội dung Phụ lục G. Cột cuối cho biết vạch đó có được cắt qua, đè lên hay không. Sơ đồ minh họa đặt ngay sau bảng.'));
+E.MARKINGS_G.forEach((g) => {
+  body.push(H3(g.grp));
+  body.push(table(['Mã', 'Vạch', 'Màu', 'Quy định', 'Được cắt, đè?'], g.rows.map((r) => r.slice(0, 5)), [700, 2100, 900, 4300, 1600], {
+    boldFirst: true,
+    cellStyle: (r, i, c) => (i === 4 ? { bold: true, color: /^Cấm/.test(c) ? C.red : /^Được/.test(c) ? C.green : C.amber } : null),
+  }));
+});
+body.push(src('QCVN 41:2024/BGTVT Điều 48–51 và Phụ lục G'));
+body.push(H3('Những điều cần nhớ về vạch kẻ'));
+E.MARKING_NOTES.forEach((t) => body.push(bullet(t)));
+body.push(H3('Sơ đồ minh họa vạch kẻ đường'));
+body.push(figGrid(['m_yellow_dash', 'm_yellow_solid', 'm_yellow_double', 'm_yellow_mixed', 'm_white_dash', 'm_white_solid', 'm_multi_lane', 'm_bus_lane', 'm_edge', 'm_hatch', 'm_box', 'm_curb', 'm_stop_zebra', 'm_giveway', 'm_zigzag', 'm_lane_arrows']));
+body.push(P('Sơ đồ là hình vẽ minh họa nhìn từ trên xuống, xe chạy bên phải. Mũi tên xanh và dấu tích: được phép. Mũi tên đỏ và dấu X: không được phép.', { spacing: { before: 80, after: 120 } }));
 
 body.push(H2('B9. Quy tắc nhường đường'));
 body.push(table(['Tình huống', 'Phải nhường ai'], D.YIELD_RULES, [3800, 5800], { boldFirst: true }));
@@ -306,18 +375,36 @@ body.push(callout('Mẹo ước lượng (kinh nghiệm)', [
 ]));
 
 // ===== PHẦN C
-body.push(H1('Phần C. Mức phạt và điểm giấy phép lái xe'));
-body.push(H2('C1. Nguyên tắc xử phạt cần biết'));
+// ===== PHẦN C: NGOẠI LỆ
+body.push(H1('Phần C. Các trường hợp ngoại lệ: khi nào được phép'));
+body.push(P('Nhiều quy tắc giao thông có kèm điều kiện "trừ trường hợp…". Bảng dưới gom các ngoại lệ có trong văn bản. Nếu một quy tắc không có trong bảng, hãy coi là không có ngoại lệ.'));
+let cIdx = 0;
+E.EXCEPTIONS.forEach((g) => {
+  cIdx += 1;
+  body.push(H2('C' + cIdx + '. ' + g.grp));
+  body.push(table(['Quy định chung', 'Ngoại lệ, được phép khi', 'Căn cứ'], g.rows.map((r) => r.slice(0, 3)), [2800, 5000, 1800], { boldFirst: true }));
+  const figs = g.rows.map((r) => r[3]).filter(Boolean);
+  if (figs.length) { body.push(gap()); body.push(figGrid(figs)); }
+});
+body.push(gap());
+body.push(callout('Nguyên tắc khi không chắc có thuộc ngoại lệ hay không', [
+  'Ngoại lệ chỉ áp dụng đúng như văn bản ghi. Không suy rộng "chắc cũng được".',
+  'Hiệu lệnh CSGT và biển báo tạm thời là cách hợp pháp nhất để đi khác với biển, vạch cố định.',
+  'Không chắc thì chọn phương án an toàn hơn: dừng lại, đi chậm, đi đường khác.',
+], 'warn'));
+
+body.push(H1('Phần D. Mức phạt và điểm giấy phép lái xe'));
+body.push(H2('D1. Nguyên tắc xử phạt cần biết'));
 body.push(table(['Nguyên tắc', 'Nội dung', 'Căn cứ'], D.PENALTY_PRINCIPLES, [1900, 5900, 1800], { boldFirst: true }));
 body.push(gap());
 body.push(callout('Rượu bia: không có mức "uống một chút"', [
   'Luật 36 Điều 9 khoản 2 nghiêm cấm điều khiển phương tiện mà trong máu hoặc hơi thở có nồng độ cồn. Chỉ cần đo ra cồn (mức 1) đã bị phạt 6–8 triệu và trừ 4 điểm; mức 3 bị phạt 30–40 triệu và tước GPLX 22–24 tháng.',
 ], 'danger'));
 
-body.push(H2('C2. Điểm giấy phép lái xe'));
+body.push(H2('D2. Điểm giấy phép lái xe'));
 body.push(table(['Vấn đề', 'Quy định', 'Căn cứ'], D.POINTS, [1900, 5900, 1800], { boldFirst: true }));
 
-body.push(H2('C3. Bảng tra cứu mức phạt ô tô con'));
+body.push(H2('D3. Bảng tra cứu mức phạt ô tô con'));
 body.push(P('Mức phạt áp dụng cho cá nhân điều khiển ô tô con không kinh doanh vận tải. Cột "Trừ điểm" là số điểm bị trừ trên GPLX. Đơn vị: đồng.'));
 D.FINE_GROUPS.forEach(([key, name]) => {
   body.push(H3(name));
@@ -339,11 +426,11 @@ D.FINE_GROUPS.forEach(([key, name]) => {
 });
 body.push(src('NĐ 168/2024/NĐ-CP Điều 6, 13, 18, 20; sửa đổi, bổ sung bởi NĐ 238/2026/NĐ-CP (hiệu lực 15/8/2026)'));
 
-body.push(H2('C4. Mười lỗi người mới hay mắc nhất'));
+body.push(H2('D4. Mười lỗi người mới hay mắc nhất'));
 body.push(table(['Lỗi', 'Mức phạt', 'Cách tránh'], D.TOP_MISTAKES, [3300, 1700, 4600], { boldFirst: true }));
-body.push(src('Mức phạt theo bảng C3; phần "Cách tránh" là kinh nghiệm'));
+body.push(src('Mức phạt theo bảng D3; phần "Cách tránh" là kinh nghiệm'));
 
-body.push(H2('C5. Tra cứu vi phạm và nộp phạt'));
+body.push(H2('D5. Tra cứu vi phạm và nộp phạt'));
 [
   'Tra phạt nguội theo biển số trên Trang thông tin điện tử của Cục Cảnh sát giao thông (csgt.vn) và theo dõi thông báo trên ứng dụng VNeID, ứng dụng giao thông của Bộ Công an.',
   'Nộp phạt theo hướng dẫn ghi trên quyết định xử phạt (Cổng dịch vụ công hoặc kênh thanh toán được ghi). Cảnh giác tin nhắn, cuộc gọi giả danh CSGT yêu cầu chuyển tiền.',
@@ -352,17 +439,60 @@ body.push(H2('C5. Tra cứu vi phạm và nộp phạt'));
 body.push(src('NĐ 168 Đ4, Đ47 k8, Đ50; phần cảnh giác giả danh là kinh nghiệm'));
 
 // ===== PHẦN D
-body.push(H1('Phần D. Kinh nghiệm cho người mới lái'));
+// ===== PHẦN E: TAI NẠN & BẢO HIỂM
+body.push(H1('Phần E. Xử lý khi xảy ra tai nạn và làm việc với bảo hiểm'));
+body.push(P('Phần này viết theo thứ tự thời gian: những gì làm trong vài phút đầu, khi CSGT đến, trong 5 ngày làm việc tiếp theo và sau đó. Căn cứ chính: Luật 36/2024 Điều 80–83, Thông tư 72/2024/TT-BCA, Nghị định 67/2023/NĐ-CP, Bộ luật Dân sự và Bộ luật Hình sự.'));
+body.push(H2('E1. Sáu nguyên tắc xử lý tai nạn'));
+body.push(table(['Nguyên tắc', 'Nội dung'], E.ACC_PRINCIPLES, [2600, 7000], { boldFirst: true }));
+body.push(src('Luật 36 Đ80; NĐ 67/2023 Đ12 k1, k4'));
+body.push(figGrid(['x_accident_scene', 'x_breakdown_highway']));
+body.push(H2('E2. Trình tự xử lý theo thời gian'));
+E.ACC_TIMELINE.forEach((ph) => { body.push(H3(ph.phase)); body.push(...numbered(ph.steps)); });
+body.push(src('Luật 36 Đ25 k2, Đ80, Đ81, Đ83; TT 72/2024/TT-BCA; NĐ 67/2023 Đ12'));
+body.push(H2('E3. Xử lý theo từng loại tình huống'));
+body.push(table(['Tình huống', 'Cách xử lý', 'Căn cứ'], E.ACC_SCENARIOS, [2300, 5500, 1800], { boldFirst: true }));
+body.push(H2('E4. Chứng cứ cần thu thập'));
+body.push(...checklist(E.ACC_EVIDENCE));
+body.push(H2('E5. Tự thỏa thuận bồi thường'));
+body.push(P('Pháp luật không cấm các bên tự thỏa thuận bồi thường. Thông tư 72/2024/TT-BCA quy định: vụ va chạm không có thiệt hại về người, chỉ thiệt hại không đáng kể về tài sản, các bên có thể đề nghị thỏa thuận dân sự tại hiện trường; CSGT vẫn lập biên bản và trong 07 ngày làm việc báo cáo đề xuất ra thông báo kết quả. Nếu các bên không tự thỏa thuận được, CSGT lập biên bản và hướng dẫn các bên đến Tòa án.'));
+body.push(H3('Văn bản thỏa thuận nên có'));
+body.push(...checklist(E.ACC_AGREEMENT));
+body.push(callout('Rủi ro khi tự thỏa thuận', [
+  'Bên kia đổi ý, trả thiếu hoặc trả chậm; hư hỏng phát sinh khi kiểm tra kỹ ở gara; chênh lệch giá gara chính hãng và gara ngoài.',
+  'Doanh nghiệp bảo hiểm có thể giảm hoặc từ chối một phần nếu không được báo và giám định (ý kiến luật sư trên báo Tuổi Trẻ; NĐ 67/2023 không có điều khoản riêng về việc này). Luôn gọi bảo hiểm trước khi thỏa thuận số tiền.',
+  'Có người bị thương thì không giải quyết bằng cách "đưa tiền rồi đi": nghĩa vụ ở lại hiện trường, trình báo vẫn còn nguyên.',
+], 'warn'));
+body.push(H2('E6. Bảo hiểm bắt buộc trách nhiệm dân sự (NĐ 67/2023)'));
+body.push(table(['Nội dung', 'Quy định', 'Căn cứ'], E.INS_TNDS, [2100, 5900, 1600], { boldFirst: true }));
+body.push(H3('Các trường hợp bảo hiểm bắt buộc không bồi thường'));
+E.INS_EXCLUSIONS.forEach((t) => body.push(bullet(t)));
+body.push(src('NĐ 67/2023/NĐ-CP Điều 7 khoản 2'));
+body.push(H3('Hồ sơ bồi thường'));
+body.push(table(['Nhóm', 'Giấy tờ'], E.INS_DOCS, [2600, 7000], { boldFirst: true }));
+body.push(src('NĐ 67/2023/NĐ-CP Điều 13'));
+body.push(H2('E7. Bảo hiểm vật chất xe (tự nguyện)'));
+body.push(table(['Nội dung', 'Thông tin'], E.INS_VCX, [2600, 7000], { boldFirst: true }));
+body.push(src('Thông tin chung và điều khoản thường gặp của doanh nghiệp bảo hiểm; điều kiện cụ thể theo hợp đồng của bạn'));
+body.push(H2('E8. Trách nhiệm pháp lý của người gây tai nạn'));
+body.push(table(['Loại trách nhiệm', 'Nội dung'], E.LIABILITY, [2000, 7600], { boldFirst: true }));
+body.push(src('NĐ 168/2024 Đ6; BLDS 2015 Đ601; BLHS 2015 (sửa đổi 2017) Đ260; Luật 36 Đ83 k1b'));
+body.push(H2('E9. Những việc tuyệt đối không làm'));
+body.push(table(['Không làm', 'Vì sao'], E.ACC_DONTS, [2800, 6800], { boldFirst: true }));
+body.push(H2('E10. Sơ cứu ban đầu ở mức an toàn'));
+body.push(table(['Việc làm', 'Cách làm'], E.FIRST_AID, [3200, 6400], { boldFirst: true }));
+body.push(src('Khuyến cáo sơ cứu phổ biến của ngành y tế, không phải quy định pháp luật. Nên học một khóa sơ cứu có thực hành.'));
+
+body.push(H1('Phần F. Kinh nghiệm cho người mới lái'));
 body.push(P('Phần này là kinh nghiệm thực hành của người lái lâu năm, không phải quy định pháp luật. Chỗ nào có căn cứ thì ghi kèm.'));
-body.push(H2('D1. Mười hai nguyên tắc vàng'));
+body.push(H2('F1. Mười hai nguyên tắc vàng'));
 body.push(table(['Nguyên tắc', 'Giải thích'], D.GOLDEN, [2800, 6800], { boldFirst: true }));
 body.push(src('Giáo trình chương IV, VI (điểm mù, khoảng cách, quan sát – phán đoán – xử lý, mệt mỏi); phần còn lại là kinh nghiệm'));
 
-body.push(H2('D2. Lộ trình tập lái sau khi có bằng'));
+body.push(H2('F2. Lộ trình tập lái sau khi có bằng'));
 body.push(table(['Giai đoạn', 'Nội dung tập'], D.TRAINING_PLAN, [3000, 6600], { boldFirst: true }));
 body.push(src('Kinh nghiệm đào tạo; số buổi chỉ là gợi ý'));
 
-body.push(H2('D3. Người lái xe và sự mệt mỏi'));
+body.push(H2('F3. Người lái xe và sự mệt mỏi'));
 [
   'Nguyên nhân: ngủ không đủ, lái liên tục nhiều giờ, ngồi sai tư thế, khoang xe bí, đường đơn điệu như cao tốc, ăn quá no, dùng thuốc gây buồn ngủ.',
   'Xử lý: dừng ở nơi an toàn (trạm dừng nghỉ trên cao tốc), ra khỏi xe vận động, uống nước, chợp mắt 15–20 phút. Không dừng ở làn khẩn cấp để ngủ.',
@@ -370,14 +500,14 @@ body.push(H2('D3. Người lái xe và sự mệt mỏi'));
 ].forEach((t) => body.push(bullet(t)));
 body.push(src('Giáo trình mục 6.2; con số 2 giờ và 15–20 phút là kinh nghiệm'));
 
-body.push(H2('D4. Chở trẻ em an toàn'));
+body.push(H2('F4. Chở trẻ em an toàn'));
 [
   'Trẻ dưới 10 tuổi và cao dưới 1,35 m không được ngồi cùng hàng ghế với người lái (trừ xe chỉ có một hàng ghế). Vi phạm: 800 nghìn – 1 triệu (NĐ 168 Đ6 k3m, sửa bởi NĐ 238/2026).',
   'Người lái phải sử dụng, hướng dẫn sử dụng thiết bị an toàn phù hợp cho trẻ (Luật 36 Đ10 k3). Xe cá nhân không dùng thiết bị phù hợp: phạt cảnh cáo (NĐ 238/2026).',
   'Kinh nghiệm: trẻ nhỏ ngồi ghế an toàn quay mặt về phía sau càng lâu càng tốt theo hướng dẫn nhà sản xuất ghế; không bế trẻ ngồi lòng; bật khóa trẻ em ở cửa sau; không để trẻ một mình trong xe.',
 ].forEach((t) => body.push(bullet(t)));
 
-body.push(H2('D5. Checklist'));
+body.push(H2('F5. Checklist'));
 body.push(H3('Mỗi lần lái'));
 body.push(...checklist(D.CHECKLIST_DAILY));
 body.push(H3('Trước chuyến đi xa'));
