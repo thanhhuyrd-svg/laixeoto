@@ -3,6 +3,7 @@ const path = require('path');
 const D = require('./data.js');
 const { signSvg, auxSvg, ICONS } = require('./signs.js');
 const E = require('./data2.js');
+const T = require('./data3.js');
 const { D: DG, STACKS } = require('./diagrams.js');
 
 const OUT = process.argv[2] || path.join(__dirname, 'tra-cuu.html');
@@ -24,7 +25,14 @@ const CAP = {
   x_uturn_arrow: 'Biển P.123a cấm rẽ trái không cấm quay đầu.', x_breakdown_highway: 'Xe hỏng trên cao tốc: làn khẩn cấp, đèn khẩn cấp, biển cách ≥ 150 m.',
   x_accident_scene: 'Hiện trường va chạm: cảnh báo, giữ nguyên, chụp ảnh, đánh dấu bánh xe.',
 };
-const DATA = { ...D, ...E, SVG: svgs, DIAG: diag, CAP };
+Object.assign(CAP, {
+  x_parked_solid: 'Xe đỗ chắn làn trên đường vạch vàng liền: dừng chờ, không lấn vạch.',
+  x_emergency_red: 'Đèn đỏ, xe ưu tiên phía sau: nhích qua vạch dừng ép sát lề phải, không đi tiếp qua giao lộ.',
+  x_turn_right_moto: 'Rẽ phải: không cắt ngang trước xe máy đang đi thẳng bên phải.',
+  x_bus_dash_turn: 'Làn buýt: chỉ nhập vào ở đoạn vạch đứt, nhường xe buýt.',
+  x_yield_right: 'Giao nhau không có báo hiệu: nhường xe đến từ bên phải.',
+});
+const DATA = { ...D, ...E, ...T, SVG: svgs, DIAG: diag, CAP };
 const json = JSON.stringify(DATA).replace(/</g, '\\u003c');
 
 const html = `<title>Lái Xe Ô Tô – Tra Cứu Nhanh</title>
@@ -146,6 +154,19 @@ figure.fig figcaption{padding:8px 12px;font-size:13px;color:var(--muted)}
 .mk-ok{color:var(--ok);font-weight:700} .mk-no{color:var(--crit);font-weight:700} .mk-mid{color:var(--warn);font-weight:700}
 .stack{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
 .stack svg{width:72px;height:90px;display:block}
+/* Tình huống khó */
+.cases{display:grid;gap:12px}
+.case{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:10px}
+.case .head{display:flex;gap:12px;align-items:flex-start}
+.verdict{flex:none;font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:.03em;padding:4px 10px;border-radius:8px;white-space:nowrap}
+.verdict.no{background:var(--crit-soft);color:var(--crit)} .verdict.yes{background:var(--new-soft);color:var(--new)}
+.verdict.cond{background:var(--warn-soft);color:var(--warn)} .verdict.must{background:var(--accent-soft);color:var(--accent)}
+.case .qq{font-weight:600;font-size:16px;line-height:1.4}
+.case .cert{font-size:12px;color:var(--muted);margin-top:4px}
+.case .fine2{font-size:13.5px}.case .fine2 b{color:var(--crit)}
+.case .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
+.case h4{margin:0 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.case figure.fig{max-width:420px}
 /* Kỹ thuật */
 details.acc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 details.acc+details.acc{margin-top:8px}
@@ -184,9 +205,10 @@ footer{font-size:12.5px;color:var(--muted);padding-block:16px 32px;border-top:1p
       <a href="#bien-bao">Biển báo</a>
       <a href="#vach-ke">Vạch kẻ</a>
       <a href="#ngoai-le">Ngoại lệ</a>
+      <a href="#tinh-huong-kho">Tình huống khó</a>
       <a href="#toc-do">Tốc độ</a>
-      <a href="#ky-thuat">Kỹ thuật lái</a>
-      <a href="#tai-nan">Tai nạn & bảo hiểm</a>
+      <a href="#ky-thuat">Kỹ thuật</a>
+      <a href="#tai-nan">Tai nạn</a>
       <a href="#tinh-huong">Sự cố</a>
       <a href="#kinh-nghiem">Kinh nghiệm</a>
       <a href="#checklist">Checklist</a>
@@ -377,6 +399,34 @@ function viewAccident(){
   + '</section>';
 }
 
+
+// ---------------- TÌNH HUỐNG KHÓ
+function viewHard(){
+  const vcls = (v) => v==='KHÔNG'?'no':v==='ĐƯỢC'?'yes':(v==='PHẢI'||v==='THEO CSGT')?'must':'cond';
+  const state = { g: 'all', q: '' };
+  const N = D.EMERGENCY_NECESSITY;
+  app.innerHTML = '<section class="view" aria-labelledby="h-hard">'
+  + '<div><h2 class="sec" id="h-hard">Tình huống khó: được hay không?</h2><p class="lead">Mỗi tình huống có kết luận ngắn, mức độ chắc chắn, lý do kèm điều khoản, cách xử lý và mức phạt nếu làm sai. Gõ không dấu cũng tìm được, ví dụ "cuu thuong", "vach lien", "xe buyt".</p></div>'
+  + '<div class="panel"><h3>"Tình thế cấp thiết": khi nào vi phạm mà không bị phạt</h3><p style="margin-bottom:8px">'+esc(N.def)+'</p>' + dots(N.conditions) + '<p class="note warn" style="margin-top:10px">'+esc(N.notAuto)+'</p></div>'
+  + '<div class="search"><input id="hq" type="search" placeholder="Tìm tình huống: xe cứu thương, vạch liền, đèn vàng…" aria-label="Tìm tình huống" autocomplete="off"><span class="count" id="hcnt" aria-live="polite"></span></div>'
+  + '<div class="chips" id="hg" role="group" aria-label="Lọc nhóm tình huống"></div>'
+  + '<div class="cases" id="hlist"></div>'
+  + src('Luật 36/2024; NĐ 168/2024; QCVN 41:2024; Luật XLVPHC Đ2 k11, Đ11 k1; hướng dẫn của Cục CSGT (3/2026, 9/2026); Công an TP.HCM (1/2025); phân tích báo Thanh Niên (27/10/2026). Xem tab Nguồn.')
+  + '</section>';
+  $('#hg').innerHTML = [['all','Tất cả']].concat(D.HARD_CASES.map(g=>[g.grp,g.grp])).map(([k,n])=>'<button class="chip" type="button" data-g="'+esc(k)+'" aria-pressed="'+(k==='all')+'">'+esc(n)+'</button>').join('');
+  function render(){
+    const terms = fold(state.q).split(/\\s+/).filter(Boolean); let n = 0, tot = 0;
+    const html = D.HARD_CASES.filter(g => state.g==='all' || g.grp===state.g).map(g => g.items.filter(c => { tot++; const hay = fold(c.q+' '+c.why.join(' ')+' '+c.todo.join(' ')); return terms.every(t=>hay.includes(t)); }).map(c => { n++; return '<article class="case"><div class="head"><span class="verdict '+vcls(c.v)+'">'+esc(c.v)+'</span><div><div class="qq">'+esc(c.q)+'</div><div class="cert">'+esc(D.CERT[c.cert])+'</div></div></div>'
+      + '<div class="cols"><div><h4>Vì sao</h4>'+dots(c.why)+'</div><div><h4>Nên làm</h4>'+dots(c.todo)+'<p class="fine2" style="margin-top:8px"><b>Nếu làm sai:</b> '+esc(c.fine)+'</p></div></div>'
+      + (c.fig ? fig(c.fig) : '') + '</article>'; }).join('')).join('');
+    $('#hlist').innerHTML = html || '<div class="panel">Không tìm thấy tình huống phù hợp.</div>';
+    $('#hcnt').textContent = n + ' tình huống';
+  }
+  $('#hq').addEventListener('input', e => { state.q = e.target.value; render(); });
+  $('#hg').addEventListener('click', e => { const b = e.target.closest('.chip'); if(!b) return; state.g = b.dataset.g; $('#hg').querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed', String(c===b))); render(); });
+  render();
+}
+
 // ---------------- KINH NGHIỆM
 function viewExp(){
   app.innerHTML = '<section class="view" aria-labelledby="h-exp">'
@@ -409,7 +459,7 @@ function viewSources(){
   + '</section>';
 }
 
-const VIEWS = { 'muc-phat': viewFines, 'bien-bao': viewSigns, 'vach-ke': viewMarkings, 'ngoai-le': viewExceptions, 'tai-nan': viewAccident, 'toc-do': viewSpeed, 'ky-thuat': viewTech, 'tinh-huong': viewEmergency, 'kinh-nghiem': viewExp, 'checklist': viewCheck, 'nguon': viewSources };
+const VIEWS = { 'muc-phat': viewFines, 'bien-bao': viewSigns, 'vach-ke': viewMarkings, 'ngoai-le': viewExceptions, 'tinh-huong-kho': viewHard, 'tai-nan': viewAccident, 'toc-do': viewSpeed, 'ky-thuat': viewTech, 'tinh-huong': viewEmergency, 'kinh-nghiem': viewExp, 'checklist': viewCheck, 'nguon': viewSources };
 function route(){
   const h = (location.hash || '').slice(1);
   const key = VIEWS[h] ? h : 'muc-phat';

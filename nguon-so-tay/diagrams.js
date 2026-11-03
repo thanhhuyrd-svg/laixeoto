@@ -157,6 +157,54 @@ D.x_red_arrow = () => {
   return svg(s, 'Mũi tên xanh cùng đèn đỏ');
 };
 
+
+D.x_parked_solid = () => svg(
+  twoWay({}) + car(250, 145, 0, { color: COL.car2 }) + `<circle cx="226" cy="137" r="3.5" fill="#FFB000"/><circle cx="226" cy="153" r="3.5" fill="#FFB000"/>` +
+  car(120, 145, 0) + path('M142 145 C180 145 185 98 225 96 L300 96 C330 96 335 145 360 145', false, { x: 250, y: 96 }) + okMark(150, 120) +
+  label(200, 30, 'Xe đỗ chắn làn, vạch vàng liền: dừng chờ, không lấn vạch') + label(120, 185, 'dừng chờ phía sau', { size: 10 }) + dirTags, 'Xe đỗ chắn làn trên đường vạch liền');
+
+D.x_emergency_red = () => {
+  let s = `<rect x="0" y="80" width="400" height="120" fill="${COL.asphalt}"/><rect x="290" y="0" width="80" height="240" fill="${COL.asphalt}"/>`;
+  s += hline(140, 0, 270, { dash: true }) + stopLineV(272, 80, 200);
+  s += car(248, 170, 0) + path('M262 176 C278 184 282 190 292 192', true) + car(312, 190, 8, { color: '#2F6DB5' });
+  s += path('M338 194 L396 194', false, { x: 372, y: 174 });
+  s += car(150, 140, 0, { color: '#F2F2F2', label: '+' }) + `<rect x="138" y="128" width="8" height="4" fill="#E0302A"/><rect x="138" y="148" width="8" height="4" fill="#2F6DB5"/>`;
+  s += path('M176 136 L380 120', true, { x: 225, y: 118 });
+  s += `<g transform="translate(40 18)"><rect x="0" y="0" width="70" height="30" rx="5" fill="#111"/><circle cx="16" cy="15" r="9" fill="#E0302A"/><circle cx="35" cy="15" r="9" fill="#333"/><circle cx="54" cy="15" r="9" fill="#333"/></g>`;
+  s += label(150, 175, 'xe cứu thương', { size: 9.5 });
+  s += label(200, 225, 'Nhích qua vạch dừng, ép sát lề phải mở đường; không đi tiếp qua giao lộ khi đèn còn đỏ', { size: 9 });
+  return svg(s, 'Nhường xe ưu tiên khi đèn đỏ');
+};
+
+D.x_turn_right_moto = () => {
+  let s = `<rect x="0" y="70" width="400" height="110" fill="${COL.asphalt}"/><rect x="250" y="70" width="80" height="170" fill="${COL.asphalt}"/>`;
+  s += hline(72, 0, 250, { width: 2 }) + hline(178, 0, 250, { width: 2 }) + hline(125, 0, 230, { dash: true });
+  s += car(160, 145, 0) + path('M184 147 C226 150 252 166 262 226', false, { x: 236, y: 156 });
+  s += `<g transform="translate(200 167)"><rect x="-15" y="-5" width="30" height="10" rx="5" fill="#111"/><circle cx="-10" cy="0" r="3.5" fill="#999"/><circle cx="10" cy="0" r="3.5" fill="#999"/></g>` + path('M218 167 L330 167', true);
+  s += label(200, 200, 'xe máy đi thẳng sát lề', { size: 10 });
+  s += label(200, 30, 'Rẽ phải: ép sát lề từ sớm; xe máy đã ở bên phải thì chờ nó đi qua');
+  return svg(s, 'Rẽ phải khi có xe máy đi thẳng');
+};
+
+D.x_bus_dash_turn = () => {
+  let s = `<rect x="0" y="60" width="400" height="140" fill="${COL.asphalt}"/><rect x="300" y="60" width="80" height="180" fill="${COL.asphalt}"/>`;
+  s += hline(62, 0, 300, { width: 2 }) + hline(108, 0, 300, { dash: true }) + hline(152, 0, 180, { color: COL.yellow, width: 4 }) + hline(152, 180, 290, { color: COL.yellow, width: 4, dash: '14 10' });
+  s += `<text x="110" y="176" font-family="Arial" font-size="15" font-weight="700" fill="${COL.yellow}" text-anchor="middle" dominant-baseline="central">BUS</text>`;
+  s += car(60, 130, 0) + path('M85 130 L180 130 C220 130 225 176 255 176 C290 176 305 200 312 236', true, { x: 230, y: 152 });
+  s += noMark(150, 152);
+  s += label(200, 30, 'Làn buýt: chỉ nhập vào ở đoạn vạch đứt trước nút giao, nhường xe buýt') + label(110, 212, 'nét liền: cấm vào', { size: 10 }) + label(240, 212, 'nét đứt: được vào', { size: 10 });
+  return svg(s, 'Nhập làn xe buýt để rẽ phải');
+};
+
+D.x_yield_right = () => {
+  let s = `<rect x="0" y="90" width="400" height="70" fill="${COL.asphalt}"/><rect x="165" y="0" width="70" height="240" fill="${COL.asphalt}"/>`;
+  s += car(90, 140, 0) + path('M112 140 L150 140', false, { x: 132, y: 116 });
+  s += car(212, 215, -90, { color: COL.car2 }) + path('M212 190 L212 70', true, { x: 240, y: 175 });
+  s += label(90, 192, 'xe mình', { size: 10 }) + label(300, 222, 'xe đến từ bên phải đi trước', { size: 10 });
+  s += label(200, 30, 'Nơi giao nhau không có báo hiệu: nhường xe đến từ bên phải');
+  return svg(s, 'Nhường xe bên phải');
+};
+
 // ---- NGOẠI LỆ
 D.x_pass_right = () => svg(
   twoWay({ dash: true }) + car(230, 140, -12, { color: COL.car2 }) + `<circle cx="244" cy="126" r="4" fill="#FFB000"/>` +

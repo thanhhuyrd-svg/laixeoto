@@ -722,6 +722,12 @@ const SOURCES = [
   ['Va chạm xe rồi tự thỏa thuận bồi thường – Tuổi Trẻ', 'tuoitre.vn', 'https://tuoitre.vn/va-cham-xe-roi-tu-thoa-thuan-boi-thuong-lam-the-nao-de-khong-thiet-hai-va-dung-luat-100261013150931385.htm'],
   ['Bộ luật Hình sự 2015 (Điều 260) – LuatVietnam', 'luatvietnam.vn', 'https://luatvietnam.vn/hinh-su/bo-luat-hinh-su-2015-so-100-2015-qh13-101324-d1.html'],
   ['Bồi thường thiệt hại do nguồn nguy hiểm cao độ theo BLDS 2015 – Tạp chí Luật sư Việt Nam', 'lsvn.vn', 'https://lsvn.vn/ve-boi-thuong-thiet-hai-do-nguon-nguy-hiem-cao-do-gay-ra-theo-quy-dinh-cua-bo-luat-dan-su-nam-2015-a149182.html'],
+  ['Gặp xe hỏng, vật cản trên đường có vạch liền: ô tô được lấn vạch để tránh? – Thanh Niên (27/10/2026)', 'thanhnien.vn', 'https://thanhnien.vn/gap-xe-hong-vat-can-tren-duong-co-vach-lien-o-to-duoc-lan-vach-de-tranh-185261027110926957.htm'],
+  ['Vượt đèn đỏ chở người cấp cứu bị phạt nguội: Cục CSGT chỉ cách xử lý – Thanh Niên (23/3/2026)', 'thanhnien.vn', 'https://thanhnien.vn/vuot-den-do-cho-nguoi-cap-cuu-bi-phat-nguoi-cuc-csgt-chi-cach-xu-ly-185260323110157026.htm'],
+  ['Cục CSGT phản hồi thắc mắc về việc vượt đèn đỏ khi chở người đi cấp cứu – Tạp chí Luật sư Việt Nam (23/3/2026)', 'lsvn.vn', 'https://lsvn.vn/cuc-csgt-phan-hoi-thac-mac-ve-viec-tai-xe-vuot-den-do-khi-cho-nguoi-di-cap-cuu-a170663.html'],
+  ['Tài xế vượt đèn đỏ để nhường đường cho xe cứu thương vẫn có thể bị phạt – Sức khỏe & Đời sống (19/9/2026)', 'suckhoedoisong.vn', 'https://suckhoedoisong.vn/tai-xe-vuot-den-do-de-nhuong-duong-cho-xe-cuu-thuong-van-co-the-bi-phat-169260918184500516.htm'],
+  ['Vượt đèn đỏ để nhường đường xe cứu thương: không bị phạt vì lợi ích lớn – Tuổi Trẻ (16/1/2025)', 'tuoitre.vn', 'https://tuoitre.vn/vuot-den-do-de-nhuong-duong-xe-cuu-thuong-khong-bi-phat-vi-loi-ich-lon-20250116175053877.htm'],
+  ['Cục CSGT đề xuất không cho mượn làn ngược chiều để vượt xe – VnExpress (28/7/2026)', 'vnexpress.net', 'https://vnexpress.net/cuc-csgt-de-xuat-khong-cho-muon-lan-nguoc-chieu-de-vuot-xe-5102515.html'],
   ['Kinh nghiệm giữ xe giữa làn – oto.com.vn', 'oto.com.vn', 'https://oto.com.vn/kinh-nghiem-lai-xe/o-to-cho-nguoi-moi-cach-de-o-to-luon-o-chinh-giua-lan-duong-articleid-vjozod3'],
   ['Hai cách đỗ xe cơ bản cho tài xế mới – VnExpress', 'vnexpress.net', 'https://vnexpress.net/hai-cach-do-xe-co-ban-cho-tai-xe-moi-4861253.html'],
 ];
@@ -737,6 +743,7 @@ const LIMITS = [
   'BLHS 2015 Điều 260 lấy theo bản sửa đổi 2017; trang nguồn ghi văn bản còn được sửa bởi Luật 86/2025/QH15, chưa kiểm tra được lần sửa này có thay đổi Điều 260 hay không. BLDS 2015 Điều 601 lấy qua bài phân tích của Tạp chí Luật sư Việt Nam, chưa đọc được nguyên văn.',
   'Thông tư 72/2024/TT-BCA không quy định rõ việc có được di chuyển xe khỏi hiện trường trong vụ va chạm nhỏ; sổ tay khuyến nghị chỉ di chuyển sau khi đã lưu chứng cứ và được công an hoặc bảo hiểm đồng ý (căn cứ NĐ 67/2023 Đ12 k1b).',
   'Sơ đồ vạch kẻ, biển phụ và tình huống là hình vẽ minh họa do sổ tay tự dựng theo nội dung quy chuẩn, không phải ảnh chụp thực tế.',
+  'Phần tình huống khó: các kết luận gắn nhãn "theo hướng dẫn của cơ quan CSGT" dựa trên phát biểu của Cục CSGT, Công an TP.HCM được báo chí đưa lại, không phải văn bản quy phạm; định nghĩa tình thế cấp thiết (Luật XLVPHC khoản 11 Điều 2) cũng lấy qua báo chí, chưa đối chiếu được văn bản luật gốc. Việc có bị phạt hay không trong từng vụ cụ thể do cơ quan có thẩm quyền xác minh.',
   'Sổ tay mang tính tham khảo, không thay thế văn bản pháp luật gốc. Mức phạt cụ thể trong khung do người có thẩm quyền quyết định.',
 ];
 

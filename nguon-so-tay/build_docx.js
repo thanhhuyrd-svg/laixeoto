@@ -7,6 +7,7 @@ const {
 } = require('docx');
 const D = require('./data.js');
 const E = require('./data2.js');
+const T = require('./data3.js');
 
 const OUT = process.argv[2] || path.join(__dirname, 'out.docx');
 const PNG = (k) => fs.readFileSync(path.join(__dirname, 'png', k + '.png'));
@@ -109,6 +110,11 @@ const CAP = {
   x_uturn_arrow: 'Biển P.123a cấm rẽ trái không cấm quay đầu.',
   x_breakdown_highway: 'Xe hỏng trên cao tốc: làn khẩn cấp, đèn khẩn cấp, biển cách ≥ 150 m.',
   x_accident_scene: 'Hiện trường va chạm: cảnh báo, giữ nguyên, chụp ảnh, đánh dấu bánh xe.',
+  x_parked_solid: 'Xe đỗ chắn làn trên đường vạch vàng liền: dừng chờ, không lấn vạch.',
+  x_emergency_red: 'Đèn đỏ, xe ưu tiên phía sau: nhích qua vạch dừng ép sát lề phải, không đi tiếp qua giao lộ.',
+  x_turn_right_moto: 'Rẽ phải: không cắt ngang trước xe máy đang đi thẳng bên phải.',
+  x_bus_dash_turn: 'Làn buýt: chỉ nhập vào ở đoạn vạch đứt, nhường xe buýt.',
+  x_yield_right: 'Giao nhau không có báo hiệu: nhường xe đến từ bên phải.',
 };
 function figGrid(keys, w = 300) {
   const cw = Math.floor(TW / 2);
@@ -124,6 +130,18 @@ function figGrid(keys, w = 300) {
     }) }));
   }
   return new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: [cw, TW - cw], rows });
+}
+function oneFig(k, w = 330) {
+  return new Paragraph({ alignment: AlignmentType.CENTER, keepNext: false, spacing: { before: 60, after: 40 }, children: [new ImageRun({ type: 'png', data: PNG(k), transformation: { width: w, height: Math.round(w * 0.6) }, altText: { title: k, description: CAP[k] || k, name: k } })] });
+}
+function verdictRow(v, cert) {
+  const col = v === 'KHÔNG' ? C.red : v === 'ĐƯỢC' ? C.green : v === 'PHẢI' || v === 'THEO CSGT' ? C.navy : C.amber;
+  const bg = v === 'KHÔNG' ? C.redBg : v === 'ĐƯỢC' ? 'E8F5E9' : v === 'PHẢI' || v === 'THEO CSGT' ? C.head : C.warnBg;
+  const W = [2200, TW - 2200];
+  return new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: W, rows: [new TableRow({ cantSplit: true, children: [
+    cell(new Paragraph({ alignment: AlignmentType.CENTER, children: [run(v, { bold: true, color: col, size: 24 })] }), W[0], { fill: bg, valign: VerticalAlign.CENTER }),
+    cell(new Paragraph({ children: [run('Mức độ chắc chắn: ', { bold: true, size: 18, color: '5A6672' }), run(T.CERT[cert], { size: 18, color: '5A6672' })] }), W[1], { valign: VerticalAlign.CENTER }),
+  ] })] });
 }
 function stackGrid(examples) {
   const W = [1700, 2600, 5338];
@@ -154,8 +172,8 @@ body.push(
   ], [2600, 7000], { boldFirst: true }),
   gap(),
   callout('Cách dùng sổ tay', [
-    'Đọc tuần tự Phần A trước khi tập lái. Phần B (báo hiệu), C (ngoại lệ) và D (mức phạt) dùng để tra cứu khi gặp biển lạ, vạch lạ hoặc cần biết mức phạt.',
-    'Phần E hướng dẫn từng bước khi xảy ra tai nạn và cách làm việc với bảo hiểm. Phần F là kinh nghiệm của người lái lâu năm, kèm checklist để in và để trong xe.',
+    'Đọc tuần tự Phần A trước khi tập lái. Phần B (báo hiệu), C (ngoại lệ), D (tình huống khó) và E (mức phạt) dùng để tra cứu khi gặp biển lạ, vạch lạ hoặc cần biết mức phạt.',
+    'Phần F hướng dẫn từng bước khi xảy ra tai nạn và cách làm việc với bảo hiểm. Phần G là kinh nghiệm của người lái lâu năm, kèm checklist để in và để trong xe.',
     'Đi kèm sổ tay là trang Tra cứu nhanh (file HTML) có ô tìm kiếm mức phạt, dùng tốt trên điện thoại.',
   ]),
   new Paragraph({ children: [new PageBreak()] }),
@@ -393,18 +411,43 @@ body.push(callout('Nguyên tắc khi không chắc có thuộc ngoại lệ hay 
   'Không chắc thì chọn phương án an toàn hơn: dừng lại, đi chậm, đi đường khác.',
 ], 'warn'));
 
-body.push(H1('Phần D. Mức phạt và điểm giấy phép lái xe'));
-body.push(H2('D1. Nguyên tắc xử phạt cần biết'));
+// ===== PHẦN D: TÌNH HUỐNG KHÓ
+body.push(H1('Phần D. Tình huống khó: được hay không?'));
+body.push(P('Mỗi tình huống có: kết luận ngắn (KHÔNG, ĐƯỢC, PHẢI hoặc CÓ ĐIỀU KIỆN), mức độ chắc chắn của kết luận, lý do kèm điều khoản, cách xử lý an toàn và mức phạt nếu làm sai. Với tình huống pháp luật không quy định trực tiếp, sổ tay ghi rõ là dựa vào hướng dẫn của cơ quan CSGT hoặc suy ra từ quy định chung.'));
+body.push(H2('D1. "Tình thế cấp thiết": khi nào vi phạm mà không bị phạt'));
+body.push(P(T.EMERGENCY_NECESSITY.def));
+body.push(H3('Điều kiện (theo hướng dẫn của Cục CSGT)'));
+T.EMERGENCY_NECESSITY.conditions.forEach((t) => body.push(bullet(t)));
+body.push(callout('Không phải miễn phạt tự động', [T.EMERGENCY_NECESSITY.notAuto], 'warn'));
+let dIdx = 1;
+T.HARD_CASES.forEach((g) => {
+  dIdx += 1;
+  body.push(H2('D' + dIdx + '. ' + g.grp));
+  g.items.forEach((c) => {
+    body.push(H3(c.q));
+    body.push(verdictRow(c.v, c.cert));
+    body.push(new Paragraph({ spacing: { before: 100, after: 40 }, keepNext: true, children: [run('Vì sao', { bold: true, color: C.teal })] }));
+    c.why.forEach((t) => body.push(bullet(t)));
+    body.push(new Paragraph({ spacing: { before: 80, after: 40 }, keepNext: true, children: [run('Nên làm', { bold: true, color: C.teal })] }));
+    c.todo.forEach((t) => body.push(bullet(t)));
+    body.push(P([run('Nếu làm sai: ', { bold: true, color: C.red }), run(c.fine)], { spacing: { before: 60, after: 80 } }));
+    if (c.fig) { body.push(oneFig(c.fig)); body.push(P([run(CAP[c.fig] || '', { italics: true, size: 17, color: '3A4652' })], { alignment: AlignmentType.CENTER, spacing: { after: 160 } })); }
+  });
+});
+body.push(src('Luật 36/2024; NĐ 168/2024; QCVN 41:2024; Luật Xử lý vi phạm hành chính Đ2 k11, Đ11 k1; hướng dẫn của Cục CSGT (báo Thanh Niên, Tạp chí Luật sư Việt Nam 23/3/2026; Sức khỏe & Đời sống 19/9/2026); Công an TP.HCM (Tuổi Trẻ 16/1/2025); phân tích của báo Thanh Niên 27/10/2026'));
+
+body.push(H1('Phần E. Mức phạt và điểm giấy phép lái xe'));
+body.push(H2('E1. Nguyên tắc xử phạt cần biết'));
 body.push(table(['Nguyên tắc', 'Nội dung', 'Căn cứ'], D.PENALTY_PRINCIPLES, [1900, 5900, 1800], { boldFirst: true }));
 body.push(gap());
 body.push(callout('Rượu bia: không có mức "uống một chút"', [
   'Luật 36 Điều 9 khoản 2 nghiêm cấm điều khiển phương tiện mà trong máu hoặc hơi thở có nồng độ cồn. Chỉ cần đo ra cồn (mức 1) đã bị phạt 6–8 triệu và trừ 4 điểm; mức 3 bị phạt 30–40 triệu và tước GPLX 22–24 tháng.',
 ], 'danger'));
 
-body.push(H2('D2. Điểm giấy phép lái xe'));
+body.push(H2('E2. Điểm giấy phép lái xe'));
 body.push(table(['Vấn đề', 'Quy định', 'Căn cứ'], D.POINTS, [1900, 5900, 1800], { boldFirst: true }));
 
-body.push(H2('D3. Bảng tra cứu mức phạt ô tô con'));
+body.push(H2('E3. Bảng tra cứu mức phạt ô tô con'));
 body.push(P('Mức phạt áp dụng cho cá nhân điều khiển ô tô con không kinh doanh vận tải. Cột "Trừ điểm" là số điểm bị trừ trên GPLX. Đơn vị: đồng.'));
 D.FINE_GROUPS.forEach(([key, name]) => {
   body.push(H3(name));
@@ -426,11 +469,11 @@ D.FINE_GROUPS.forEach(([key, name]) => {
 });
 body.push(src('NĐ 168/2024/NĐ-CP Điều 6, 13, 18, 20; sửa đổi, bổ sung bởi NĐ 238/2026/NĐ-CP (hiệu lực 15/8/2026)'));
 
-body.push(H2('D4. Mười lỗi người mới hay mắc nhất'));
+body.push(H2('E4. Mười lỗi người mới hay mắc nhất'));
 body.push(table(['Lỗi', 'Mức phạt', 'Cách tránh'], D.TOP_MISTAKES, [3300, 1700, 4600], { boldFirst: true }));
-body.push(src('Mức phạt theo bảng D3; phần "Cách tránh" là kinh nghiệm'));
+body.push(src('Mức phạt theo bảng E3; phần "Cách tránh" là kinh nghiệm'));
 
-body.push(H2('D5. Tra cứu vi phạm và nộp phạt'));
+body.push(H2('E5. Tra cứu vi phạm và nộp phạt'));
 [
   'Tra phạt nguội theo biển số trên Trang thông tin điện tử của Cục Cảnh sát giao thông (csgt.vn) và theo dõi thông báo trên ứng dụng VNeID, ứng dụng giao thông của Bộ Công an.',
   'Nộp phạt theo hướng dẫn ghi trên quyết định xử phạt (Cổng dịch vụ công hoặc kênh thanh toán được ghi). Cảnh giác tin nhắn, cuộc gọi giả danh CSGT yêu cầu chuyển tiền.',
@@ -440,20 +483,20 @@ body.push(src('NĐ 168 Đ4, Đ47 k8, Đ50; phần cảnh giác giả danh là ki
 
 // ===== PHẦN D
 // ===== PHẦN E: TAI NẠN & BẢO HIỂM
-body.push(H1('Phần E. Xử lý khi xảy ra tai nạn và làm việc với bảo hiểm'));
+body.push(H1('Phần F. Xử lý khi xảy ra tai nạn và làm việc với bảo hiểm'));
 body.push(P('Phần này viết theo thứ tự thời gian: những gì làm trong vài phút đầu, khi CSGT đến, trong 5 ngày làm việc tiếp theo và sau đó. Căn cứ chính: Luật 36/2024 Điều 80–83, Thông tư 72/2024/TT-BCA, Nghị định 67/2023/NĐ-CP, Bộ luật Dân sự và Bộ luật Hình sự.'));
-body.push(H2('E1. Sáu nguyên tắc xử lý tai nạn'));
+body.push(H2('F1. Sáu nguyên tắc xử lý tai nạn'));
 body.push(table(['Nguyên tắc', 'Nội dung'], E.ACC_PRINCIPLES, [2600, 7000], { boldFirst: true }));
 body.push(src('Luật 36 Đ80; NĐ 67/2023 Đ12 k1, k4'));
 body.push(figGrid(['x_accident_scene', 'x_breakdown_highway']));
-body.push(H2('E2. Trình tự xử lý theo thời gian'));
+body.push(H2('F2. Trình tự xử lý theo thời gian'));
 E.ACC_TIMELINE.forEach((ph) => { body.push(H3(ph.phase)); body.push(...numbered(ph.steps)); });
 body.push(src('Luật 36 Đ25 k2, Đ80, Đ81, Đ83; TT 72/2024/TT-BCA; NĐ 67/2023 Đ12'));
-body.push(H2('E3. Xử lý theo từng loại tình huống'));
+body.push(H2('F3. Xử lý theo từng loại tình huống'));
 body.push(table(['Tình huống', 'Cách xử lý', 'Căn cứ'], E.ACC_SCENARIOS, [2300, 5500, 1800], { boldFirst: true }));
-body.push(H2('E4. Chứng cứ cần thu thập'));
+body.push(H2('F4. Chứng cứ cần thu thập'));
 body.push(...checklist(E.ACC_EVIDENCE));
-body.push(H2('E5. Tự thỏa thuận bồi thường'));
+body.push(H2('F5. Tự thỏa thuận bồi thường'));
 body.push(P('Pháp luật không cấm các bên tự thỏa thuận bồi thường. Thông tư 72/2024/TT-BCA quy định: vụ va chạm không có thiệt hại về người, chỉ thiệt hại không đáng kể về tài sản, các bên có thể đề nghị thỏa thuận dân sự tại hiện trường; CSGT vẫn lập biên bản và trong 07 ngày làm việc báo cáo đề xuất ra thông báo kết quả. Nếu các bên không tự thỏa thuận được, CSGT lập biên bản và hướng dẫn các bên đến Tòa án.'));
 body.push(H3('Văn bản thỏa thuận nên có'));
 body.push(...checklist(E.ACC_AGREEMENT));
@@ -462,7 +505,7 @@ body.push(callout('Rủi ro khi tự thỏa thuận', [
   'Doanh nghiệp bảo hiểm có thể giảm hoặc từ chối một phần nếu không được báo và giám định (ý kiến luật sư trên báo Tuổi Trẻ; NĐ 67/2023 không có điều khoản riêng về việc này). Luôn gọi bảo hiểm trước khi thỏa thuận số tiền.',
   'Có người bị thương thì không giải quyết bằng cách "đưa tiền rồi đi": nghĩa vụ ở lại hiện trường, trình báo vẫn còn nguyên.',
 ], 'warn'));
-body.push(H2('E6. Bảo hiểm bắt buộc trách nhiệm dân sự (NĐ 67/2023)'));
+body.push(H2('F6. Bảo hiểm bắt buộc trách nhiệm dân sự (NĐ 67/2023)'));
 body.push(table(['Nội dung', 'Quy định', 'Căn cứ'], E.INS_TNDS, [2100, 5900, 1600], { boldFirst: true }));
 body.push(H3('Các trường hợp bảo hiểm bắt buộc không bồi thường'));
 E.INS_EXCLUSIONS.forEach((t) => body.push(bullet(t)));
@@ -470,29 +513,29 @@ body.push(src('NĐ 67/2023/NĐ-CP Điều 7 khoản 2'));
 body.push(H3('Hồ sơ bồi thường'));
 body.push(table(['Nhóm', 'Giấy tờ'], E.INS_DOCS, [2600, 7000], { boldFirst: true }));
 body.push(src('NĐ 67/2023/NĐ-CP Điều 13'));
-body.push(H2('E7. Bảo hiểm vật chất xe (tự nguyện)'));
+body.push(H2('F7. Bảo hiểm vật chất xe (tự nguyện)'));
 body.push(table(['Nội dung', 'Thông tin'], E.INS_VCX, [2600, 7000], { boldFirst: true }));
 body.push(src('Thông tin chung và điều khoản thường gặp của doanh nghiệp bảo hiểm; điều kiện cụ thể theo hợp đồng của bạn'));
-body.push(H2('E8. Trách nhiệm pháp lý của người gây tai nạn'));
+body.push(H2('F8. Trách nhiệm pháp lý của người gây tai nạn'));
 body.push(table(['Loại trách nhiệm', 'Nội dung'], E.LIABILITY, [2000, 7600], { boldFirst: true }));
 body.push(src('NĐ 168/2024 Đ6; BLDS 2015 Đ601; BLHS 2015 (sửa đổi 2017) Đ260; Luật 36 Đ83 k1b'));
-body.push(H2('E9. Những việc tuyệt đối không làm'));
+body.push(H2('F9. Những việc tuyệt đối không làm'));
 body.push(table(['Không làm', 'Vì sao'], E.ACC_DONTS, [2800, 6800], { boldFirst: true }));
-body.push(H2('E10. Sơ cứu ban đầu ở mức an toàn'));
+body.push(H2('F10. Sơ cứu ban đầu ở mức an toàn'));
 body.push(table(['Việc làm', 'Cách làm'], E.FIRST_AID, [3200, 6400], { boldFirst: true }));
 body.push(src('Khuyến cáo sơ cứu phổ biến của ngành y tế, không phải quy định pháp luật. Nên học một khóa sơ cứu có thực hành.'));
 
-body.push(H1('Phần F. Kinh nghiệm cho người mới lái'));
+body.push(H1('Phần G. Kinh nghiệm cho người mới lái'));
 body.push(P('Phần này là kinh nghiệm thực hành của người lái lâu năm, không phải quy định pháp luật. Chỗ nào có căn cứ thì ghi kèm.'));
-body.push(H2('F1. Mười hai nguyên tắc vàng'));
+body.push(H2('G1. Mười hai nguyên tắc vàng'));
 body.push(table(['Nguyên tắc', 'Giải thích'], D.GOLDEN, [2800, 6800], { boldFirst: true }));
 body.push(src('Giáo trình chương IV, VI (điểm mù, khoảng cách, quan sát – phán đoán – xử lý, mệt mỏi); phần còn lại là kinh nghiệm'));
 
-body.push(H2('F2. Lộ trình tập lái sau khi có bằng'));
+body.push(H2('G2. Lộ trình tập lái sau khi có bằng'));
 body.push(table(['Giai đoạn', 'Nội dung tập'], D.TRAINING_PLAN, [3000, 6600], { boldFirst: true }));
 body.push(src('Kinh nghiệm đào tạo; số buổi chỉ là gợi ý'));
 
-body.push(H2('F3. Người lái xe và sự mệt mỏi'));
+body.push(H2('G3. Người lái xe và sự mệt mỏi'));
 [
   'Nguyên nhân: ngủ không đủ, lái liên tục nhiều giờ, ngồi sai tư thế, khoang xe bí, đường đơn điệu như cao tốc, ăn quá no, dùng thuốc gây buồn ngủ.',
   'Xử lý: dừng ở nơi an toàn (trạm dừng nghỉ trên cao tốc), ra khỏi xe vận động, uống nước, chợp mắt 15–20 phút. Không dừng ở làn khẩn cấp để ngủ.',
@@ -500,14 +543,14 @@ body.push(H2('F3. Người lái xe và sự mệt mỏi'));
 ].forEach((t) => body.push(bullet(t)));
 body.push(src('Giáo trình mục 6.2; con số 2 giờ và 15–20 phút là kinh nghiệm'));
 
-body.push(H2('F4. Chở trẻ em an toàn'));
+body.push(H2('G4. Chở trẻ em an toàn'));
 [
   'Trẻ dưới 10 tuổi và cao dưới 1,35 m không được ngồi cùng hàng ghế với người lái (trừ xe chỉ có một hàng ghế). Vi phạm: 800 nghìn – 1 triệu (NĐ 168 Đ6 k3m, sửa bởi NĐ 238/2026).',
   'Người lái phải sử dụng, hướng dẫn sử dụng thiết bị an toàn phù hợp cho trẻ (Luật 36 Đ10 k3). Xe cá nhân không dùng thiết bị phù hợp: phạt cảnh cáo (NĐ 238/2026).',
   'Kinh nghiệm: trẻ nhỏ ngồi ghế an toàn quay mặt về phía sau càng lâu càng tốt theo hướng dẫn nhà sản xuất ghế; không bế trẻ ngồi lòng; bật khóa trẻ em ở cửa sau; không để trẻ một mình trong xe.',
 ].forEach((t) => body.push(bullet(t)));
 
-body.push(H2('F5. Checklist'));
+body.push(H2('G5. Checklist'));
 body.push(H3('Mỗi lần lái'));
 body.push(...checklist(D.CHECKLIST_DAILY));
 body.push(H3('Trước chuyến đi xa'));
