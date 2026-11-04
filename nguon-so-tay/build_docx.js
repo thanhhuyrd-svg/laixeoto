@@ -8,6 +8,9 @@ const {
 const D = require('./data.js');
 const E = require('./data2.js');
 const T = require('./data3.js');
+const U = require('./data4.js');
+const { CATALOG } = require('./data5.js');
+const CI = require('./catalog_icons.js');
 
 const OUT = process.argv[2] || path.join(__dirname, 'out.docx');
 const PNG = (k) => fs.readFileSync(path.join(__dirname, 'png', k + '.png'));
@@ -272,6 +275,21 @@ D.EMERGENCY.forEach((e) => {
 });
 
 // ===== PHẦN B
+body.push(H2('A11. Lái xe số tự động: nguyên tắc và mẹo'));
+body.push(P('Phần lớn ô tô con hiện nay dùng hộp số tự động (AT, CVT, ly hợp kép DCT). Thao tác đơn giản hơn số sàn nhưng có những nguyên tắc bắt buộc phải thành phản xạ, nhất là đạp phanh khi chuyển số và không dùng chân trái.'));
+body.push(H3('Các vị trí cần số'));
+body.push(table(['Vị trí', 'Dùng khi nào'], U.AT_GEARS_EXTRA, [2000, 7600], { boldFirst: true }));
+body.push(H3('Mười sáu nguyên tắc'));
+body.push(table(['Nguyên tắc', 'Giải thích', 'Nguồn'], U.AT_RULES.map((r) => [r.t, r.d, r.ref]), [2300, 5500, 1800], { boldFirst: true }));
+body.push(H3('Thao tác mẫu'));
+U.AT_ROUTINES.forEach((r) => { body.push(P([run(r.name, { bold: true, color: C.navy })], { spacing: { before: 120, after: 40 }, keepNext: true })); body.push(...numbered(r.steps)); });
+body.push(callout('Ghi nhớ nhanh', [
+  'Đổi số: chân phải đạp phanh trước, P sang R đạp hết hành trình; gạt xong nhìn đồng hồ xác nhận số.',
+  'Chân trái để yên. Lùi xe: nhả phanh là đủ. Xuống dốc: số thấp, không về N.',
+  'Đỗ xe: có cả P và phanh tay.',
+], 'warn'));
+body.push(src('Giáo trình KTLX 2018 mục 2.9.2, 2.10.2, 3.3; VnExpress 3/10/2014 và 21/10/2016; Báo Quốc tế 28/5/2025; oto.com.vn; sách hướng dẫn sử dụng của từng xe'));
+
 body.push(H1('Phần B. Biển báo, vạch kẻ đường, đèn tín hiệu'));
 body.push(H2('B1. Thứ tự hiệu lực của báo hiệu'));
 body.push(P('Khi các báo hiệu ở cùng một khu vực có ý nghĩa khác nhau, chấp hành theo thứ tự từ trên xuống:'));
@@ -550,7 +568,16 @@ body.push(H2('G4. Chở trẻ em an toàn'));
   'Kinh nghiệm: trẻ nhỏ ngồi ghế an toàn quay mặt về phía sau càng lâu càng tốt theo hướng dẫn nhà sản xuất ghế; không bế trẻ ngồi lòng; bật khóa trẻ em ở cửa sau; không để trẻ một mình trong xe.',
 ].forEach((t) => body.push(bullet(t)));
 
-body.push(H2('G5. Checklist'));
+body.push(H2('G5. Câu truyền miệng dễ nhớ của dân dạy lái và tài xế'));
+body.push(P('Mỗi câu kèm ý nghĩa, đánh giá đúng hay chưa đúng và căn cứ. Câu nào chỉ là kinh nghiệm, sổ tay ghi rõ.'));
+U.SAYINGS.forEach((g) => {
+  body.push(H3(g.grp));
+  body.push(table(['Câu', 'Ý nghĩa', 'Đánh giá', 'Căn cứ'], g.rows, [2600, 3700, 1300, 2000], { boldFirst: true, cellStyle: (r, i, c) => (i === 2 ? { bold: true, color: /^Đúng/.test(c) ? C.green : C.amber } : null) }));
+});
+body.push(H2('G6. Những lời đồn sai hoặc chưa đúng hẳn'));
+body.push(table(['Lời đồn', 'Đánh giá', 'Sự thật', 'Căn cứ'], U.MYTHS, [2600, 1200, 3900, 1900], { boldFirst: true, cellStyle: (r, i, c) => (i === 1 ? { bold: true, color: /^Sai/.test(c) ? C.red : C.amber } : null) }));
+
+body.push(H2('G7. Checklist'));
 body.push(H3('Mỗi lần lái'));
 body.push(...checklist(D.CHECKLIST_DAILY));
 body.push(H3('Trước chuyến đi xa'));
@@ -558,8 +585,28 @@ body.push(...checklist(D.CHECKLIST_TRIP));
 body.push(H3('Số điện thoại khẩn cấp'));
 body.push(table(['Số', 'Dịch vụ'], D.EMERGENCY_NUMBERS, [1500, 8100], { boldFirst: true, center: [0], cellStyle: (r, i) => (i === 0 ? { size: 26, color: C.red, bold: true } : null) }));
 
+// ===== PHỤ LỤC 1: DANH MỤC BIỂN BÁO
+body.push(H1('Phụ lục 1. Danh mục đầy đủ biển báo theo QCVN 41:2024'));
+body.push(P('Danh mục mã và tên biển lấy nguyên văn từ các điều khoản danh mục của QCVN 41:2024/BGTVT (Điều 22.1, 28.1, 32.1, 36.1, 41.2.1, 46.8); ý nghĩa tóm lược từ Phụ lục B, C, D, E, F. Hình là minh họa: biển thường gặp được vẽ giản lược, các biển còn lại dùng hình đại diện theo nhóm (đúng hình dạng, màu nhóm, ghi mã biển) chứ không phải hình vẽ thật của biển.'));
+CATALOG.forEach((cg) => {
+  body.push(H2(cg.name + ' – ' + cg.rows.length + ' mục'));
+  const W = [800, 1500, 3000, 4338];
+  const head = new TableRow({ tableHeader: true, children: ['Hình', 'Mã', 'Tên biển', 'Ý nghĩa'].map((h, i) => cell(h, W[i], { bold: true, fill: C.head, color: C.navy })) });
+  const rows = cg.rows.map((r, ri) => { const f = ri % 2 ? C.zebra : undefined; return new TableRow({ cantSplit: true, children: [
+    cell(new Paragraph({ alignment: AlignmentType.CENTER, children: [img(CI.iconId(r[0]), 26, 26)] }), W[0], { fill: f, valign: VerticalAlign.CENTER }),
+    cell(r[0], W[1], { bold: true, fill: f, size: 17 }), cell(r[1], W[2], { fill: f, size: 17 }), cell(r[2] || '—', W[3], { fill: f, size: 17 }),
+  ] }); });
+  body.push(new Table({ width: { size: TW, type: WidthType.DXA }, columnWidths: W, rows: [head, ...rows], layout: TableLayoutType.FIXED }));
+  body.push(src('QCVN 41:2024/BGTVT ' + cg.ref));
+});
+body.push(callout('Chỗ văn bản ghi không thống nhất', [
+  'R.412i–p (kết thúc làn dành riêng) được Phụ lục D.15 đánh số R.413i–p; R.415 có thêm R.415a, R.415b ở Phụ lục D.16.',
+  'P.133, P.134 ở Phụ lục B.25 và E.44 so với DP.133, DP.134 ở danh mục; I.428 và I.437 có ở Phụ lục E nhưng không có hoặc thiếu biến thể ở danh mục Điều 36.1.',
+  'IE.468, IE.472, IE.461 có số biến thể khác nhau giữa Điều 46.8, Điều 47 và Bảng 5. Phần mô tả I.413 trong Phụ lục E không đọc được.',
+], 'warn'));
+
 // ===== Phụ lục
-body.push(H1('Phụ lục. Nguồn tham khảo và giới hạn'));
+body.push(H1('Phụ lục 2. Nguồn tham khảo và giới hạn'));
 body.push(H2('Nguồn đã đối chiếu'));
 body.push(table(['Tài liệu', 'Nơi đăng', 'Đường dẫn'], D.SOURCES.map((s) => [s[0], s[1], s[2] || '(văn bản gốc trong repo)']), [3600, 2000, 4000], { cellStyle: (r, i) => (i === 2 ? { size: 15 } : null) }));
 body.push(H2('Những điều chưa xác minh được'));

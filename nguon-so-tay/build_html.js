@@ -4,6 +4,11 @@ const D = require('./data.js');
 const { signSvg, auxSvg, ICONS } = require('./signs.js');
 const E = require('./data2.js');
 const T = require('./data3.js');
+const U = require('./data4.js');
+const { CATALOG } = require('./data5.js');
+const CI = require('./catalog_icons.js');
+const CATI = {}; CATALOG.forEach(c => c.rows.forEach(r => { const id = CI.iconId(r[0]); if (!CATI[id]) CATI[id] = CI.iconSvg(r[0]); }));
+const CATROWS = CATALOG.map(c => ({ k: c.k, name: c.name, ref: c.ref, rows: c.rows.map(r => [r[0], r[1], r[2], CI.iconId(r[0])]) }));
 const { D: DG, STACKS } = require('./diagrams.js');
 
 const OUT = process.argv[2] || path.join(__dirname, 'tra-cuu.html');
@@ -32,10 +37,10 @@ Object.assign(CAP, {
   x_bus_dash_turn: 'Làn buýt: chỉ nhập vào ở đoạn vạch đứt, nhường xe buýt.',
   x_yield_right: 'Giao nhau không có báo hiệu: nhường xe đến từ bên phải.',
 });
-const DATA = { ...D, ...E, ...T, SVG: svgs, DIAG: diag, CAP };
+const DATA = { ...D, ...E, ...T, ...U, SVG: svgs, DIAG: diag, CAP, CATI, CATROWS };
 const json = JSON.stringify(DATA).replace(/</g, '\\u003c');
 
-const html = `<title>Lái Xe Ô Tô – Tra Cứu Nhanh</title>
+const html = `<title>Sổ Ghi Chú Tra Cứu</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,7 +49,7 @@ const html = `<title>Lái Xe Ô Tô – Tra Cứu Nhanh</title>
 /* Bố cục: thanh đầu dính như biển chỉ dẫn xanh, nội dung một cột rộng 1100px; thẻ tra cứu có dải màu theo mức trừ điểm. */
 :root{
   --bg:#F3F5F7; --surface:#FFFFFF; --sunk:#E8EDF1; --fg:#17202A; --muted:#55626F; --line:#D3DBE2;
-  --road:#0B3D6B; --road-fg:#FFFFFF; --accent:#0B5CAD; --accent-soft:#E2EEF9;
+  --road:#FFFFFF; --road-fg:#2B3540; --accent:#0B5CAD; --accent-soft:#E2EEF9;
   --ok:#2E7D32; --warn:#A35F00; --warn-soft:#FFF2DB; --crit:#B3261E; --crit-soft:#FCE8E6; --new:#00704A; --new-soft:#E1F3EB;
   --font-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --font-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
@@ -52,32 +57,35 @@ const html = `<title>Lái Xe Ô Tô – Tra Cứu Nhanh</title>
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0F151B; --surface:#17202A; --sunk:#1F2A35; --fg:#E7EDF2; --muted:#9AA8B5; --line:#2C3946;
-  --road:#0A2F52; --road-fg:#F2F6FA; --accent:#6DB1F2; --accent-soft:#16324D;
+  --road:#17202A; --road-fg:#D5DDE5; --accent:#6DB1F2; --accent-soft:#16324D;
   --ok:#7BC47F; --warn:#F2B25C; --warn-soft:#3A2A10; --crit:#F28B82; --crit-soft:#3B1715; --new:#5CC79A; --new-soft:#123326;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F151B; --surface:#17202A; --sunk:#1F2A35; --fg:#E7EDF2; --muted:#9AA8B5; --line:#2C3946;
-  --road:#0A2F52; --road-fg:#F2F6FA; --accent:#6DB1F2; --accent-soft:#16324D;
+  --road:#17202A; --road-fg:#D5DDE5; --accent:#6DB1F2; --accent-soft:#16324D;
   --ok:#7BC47F; --warn:#F2B25C; --warn-soft:#3A2A10; --crit:#F28B82; --crit-soft:#3B1715; --new:#5CC79A; --new-soft:#123326;
   color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.55}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--road)}
 .wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--road);color:var(--road-fg);box-shadow:0 1px 0 rgba(0,0,0,.15)}
-.brand{display:flex;align-items:center;gap:12px;padding-block:12px 6px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--road);color:var(--road-fg);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px 4px}
 .brand-mark{width:34px;height:34px;flex:none;border-radius:6px;background:var(--road-fg);display:grid;place-items:center}
-.brand h1{font-family:var(--font-display);font-weight:700;font-size:26px;letter-spacing:.02em;margin:0;line-height:1.05;text-transform:uppercase}
-.brand small{display:block;font-size:12px;opacity:.82;font-family:var(--font-body);text-transform:none;letter-spacing:0;font-weight:400}
+.brand h1{font-family:var(--font-body);font-weight:600;font-size:16px;margin:0;line-height:1.2}
+.brand small{display:inline;margin-left:8px;font-size:12px;color:var(--muted);font-weight:400}
+.pic-toggle{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:5px 10px;border-radius:8px;cursor:pointer;white-space:nowrap}
 nav.tabs{display:flex;gap:4px;overflow-x:auto;padding-block:4px 0;scrollbar-width:none}
 nav.tabs::-webkit-scrollbar{display:none}
-nav.tabs a{flex:none;color:var(--road-fg);text-decoration:none;padding:9px 12px 10px;border-radius:8px 8px 0 0;font-weight:600;font-size:14px;opacity:.85;white-space:nowrap}
-nav.tabs a:hover{opacity:1;background:rgba(255,255,255,.08)}
-nav.tabs a[aria-current="page"]{background:var(--bg);color:var(--fg);opacity:1}
+nav.tabs a{flex:none;color:var(--muted);text-decoration:none;padding:8px 10px 9px;font-weight:500;font-size:14px;white-space:nowrap;border-bottom:2px solid transparent}
+nav.tabs a:hover{color:var(--fg)}
+nav.tabs a[aria-current="page"]{color:var(--fg);border-bottom-color:var(--fg);font-weight:600}
 a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 main{padding-block:20px 48px}
-section.view{display:grid;gap:20px}
-h2.sec{font-family:var(--font-display);font-size:28px;font-weight:700;margin:0;letter-spacing:.01em;text-wrap:balance}
+section.view{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+section.view > *, .grid2 > *, .grid3 > *, .figs > *{min-width:0}
+main a{overflow-wrap:anywhere}
+h2.sec{font-family:var(--font-body);font-size:22px;font-weight:700;margin:0;letter-spacing:.01em;text-wrap:balance}
 h3{font-size:17px;margin:0 0 8px;text-wrap:balance}
 p{margin:0}
 .lead{color:var(--muted);max-width:70ch}
@@ -141,13 +149,13 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:now
 .shape svg{width:52px;height:52px}
 .prio{counter-reset:p;display:grid;gap:8px;margin:0;padding:0;list-style:none}
 .prio li{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
-.prio li::before{counter-increment:p;content:counter(p);font-family:var(--font-display);font-weight:700;font-size:20px;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--road);color:var(--road-fg)}
+.prio li::before{counter-increment:p;content:counter(p);font-weight:700;font-size:16px;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:var(--sunk);color:var(--fg)}
 .lights{display:grid;gap:8px}
 .light{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
 .dot{width:18px;height:18px;border-radius:50%;margin-top:3px;border:2px solid var(--line)}
 
 /* Sơ đồ */
-.figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:12px}
+.figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:12px;align-items:start}
 figure.fig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 figure.fig svg{display:block;width:100%;height:auto}
 figure.fig figcaption{padding:8px 12px;font-size:13px;color:var(--muted)}
@@ -167,6 +175,14 @@ figure.fig figcaption{padding:8px 12px;font-size:13px;color:var(--muted)}
 .case .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
 .case h4{margin:0 0 4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .case figure.fig{max-width:420px}
+/* Danh mục biển */
+.cat{display:grid;gap:6px}
+.cat-row{display:grid;grid-template-columns:44px 120px 1fr;gap:10px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.cat-row svg{width:40px;height:40px;display:block}
+.cat-row .cc{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;min-width:0}
+.cat-row .cn{font-weight:600}.cat-row .cm{font-size:13px;color:var(--muted)}
+.discreet .cat-row{grid-template-columns:120px 1fr}
+@media (max-width:560px){.cat-row{grid-template-columns:40px 1fr}.cat-row .cc{grid-column:2}.discreet .cat-row{grid-template-columns:1fr}}
 /* Kỹ thuật */
 details.acc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 details.acc+details.acc{margin-top:8px}
@@ -189,16 +205,23 @@ ul.dots{margin:0;padding-left:20px;display:grid;gap:5px}
 .sos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:10px}
 .sos div{background:var(--crit-soft);border-radius:var(--r);padding:12px 14px;display:grid;gap:2px}
 .sos b{font-family:var(--font-display);font-size:38px;line-height:1;color:var(--crit);user-select:all}
+/* Chế độ kín: ẩn hình minh họa */
+.pic-btn{display:none;font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:3px 9px;border-radius:6px;cursor:pointer;margin-top:6px}
+.discreet .pic-btn{display:inline-block}
+.discreet .pic{display:none!important}
+.discreet .show .pic{display:block!important}
+.discreet .sign,.discreet .shape,.discreet .stack{grid-template-columns:1fr}
+.discreet figure.fig{max-width:none}
 footer{font-size:12.5px;color:var(--muted);padding-block:16px 32px;border-top:1px solid var(--line)}
-@media (max-width:560px){.brand small{display:none}.brand h1{font-size:22px}.chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.chips::-webkit-scrollbar{display:none}.chip{flex:none}.search .count{flex-basis:100%}}
+@media (max-width:560px){.brand small{display:none}.chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.chips::-webkit-scrollbar{display:none}.chip{flex:none}.search .count{flex-basis:100%}}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 </style>
 
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <div class="brand-mark" aria-hidden="true">${svgs.r301a.replace('<svg ', '<svg width="30" height="30" ')}</div>
-      <h1>Lái xe ô tô · Tra cứu nhanh<small>Theo Luật 36/2024, NĐ 168/2024, NĐ 238/2026, TT 38/2024, QCVN 41:2024 · cập nhật ${D.META.updated}</small></h1>
+      <h1>Sổ ghi chú<small>cập nhật ${D.META.updated}</small></h1>
+      <button class="pic-toggle" id="picToggle" type="button" aria-pressed="false">Hiện hình</button>
     </div>
     <nav class="tabs" aria-label="Mục tra cứu">
       <a href="#muc-phat">Mức phạt</a>
@@ -208,9 +231,11 @@ footer{font-size:12.5px;color:var(--muted);padding-block:16px 32px;border-top:1p
       <a href="#tinh-huong-kho">Tình huống khó</a>
       <a href="#toc-do">Tốc độ</a>
       <a href="#ky-thuat">Kỹ thuật</a>
+      <a href="#so-tu-dong">Số tự động</a>
       <a href="#tai-nan">Tai nạn</a>
       <a href="#tinh-huong">Sự cố</a>
       <a href="#kinh-nghiem">Kinh nghiệm</a>
+      <a href="#truyen-mieng">Truyền miệng</a>
       <a href="#checklist">Checklist</a>
       <a href="#nguon">Nguồn</a>
     </nav>
@@ -218,7 +243,7 @@ footer{font-size:12.5px;color:var(--muted);padding-block:16px 32px;border-top:1p
 </header>
 
 <main class="wrap" id="app"></main>
-<footer class="wrap">Trang tham khảo, không thay thế văn bản pháp luật gốc. Mức phạt áp dụng cho cá nhân lái ô tô con không kinh doanh vận tải; mức cụ thể trong khung do người có thẩm quyền quyết định.</footer>
+<footer class="wrap">Tài liệu tham khảo theo Luật 36/2024, NĐ 168/2024, NĐ 238/2026, TT 38/2024, QCVN 41:2024; không thay thế văn bản gốc. Mức phạt áp dụng cho cá nhân, xe không kinh doanh vận tải.</footer>
 
 <script id="data" type="application/json">${json}</script>
 <script>
@@ -284,26 +309,39 @@ function viewSigns(){
   app.innerHTML = '<section class="view" aria-labelledby="h-signs">'
   + '<div><h2 class="sec" id="h-signs">Biển báo, đèn, vạch kẻ</h2><p class="lead">Nhận diện biển theo hình dạng trước, rồi mới đọc chi tiết. Hình là minh họa giản lược theo QCVN 41:2024.</p></div>'
   + '<div class="grid2"><div class="panel"><h3>Thứ tự hiệu lực khi các báo hiệu khác nhau</h3><ol class="prio">' + D.PRIORITY.map(p => '<li><div><b>'+esc(p[1])+'</b>'+(p[2]?'<div class="src" style="margin-top:2px">'+esc(p[2])+'</div>':'')+'</div></li>').join('') + '</ol>'+src('Luật 36 Đ11 k2, k12; QCVN 41:2024 Điều 4')+'</div>'
-  + '<div class="panel"><h3>Năm nhóm biển</h3><div style="display:grid;gap:12px">' + D.SIGN_GROUPS.map(g => '<div class="shape">'+(gIcon[g[0]]==='aux'?D.SVG.aux.replace('<svg ','<svg style="width:52px;height:26px" '):D.SVG[gIcon[g[0]]])+'<div><b>'+esc(g[0])+'</b> <span class="tag exp">'+esc(g[1])+'</span><div class="src" style="margin-top:2px">'+esc(g[2])+'. '+esc(g[3])+'</div></div></div>').join('') + '</div></div></div>'
+  + '<div class="panel"><h3>Năm nhóm biển</h3><div style="display:grid;gap:12px">' + D.SIGN_GROUPS.map(g => '<div class="shape"><span class="pic">'+(gIcon[g[0]]==='aux'?D.SVG.aux.replace('<svg ','<svg style="width:52px;height:26px" '):D.SVG[gIcon[g[0]]])+'</span><div><b>'+esc(g[0])+'</b> <span class="tag exp">'+esc(g[1])+'</span><div class="src" style="margin-top:2px">'+esc(g[2])+'. '+esc(g[3])+'</div></div></div>').join('') + '</div></div></div>'
   + '<div><div class="chips" id="sg" role="group" aria-label="Lọc biển"></div></div><div class="signs" id="signs"></div>'
   + '<div><h3>Biển cấm có hiệu lực từ đâu đến đâu?</h3>' + table(['Trường hợp','Quy tắc','QCVN 41'], D.SIGN_SCOPE.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + '</div>'
   + '<div><h3>Đọc biển phụ theo 6 bước</h3>' + table(['Bước','Biển phụ trả lời'], D.AUX_HOWTO.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1])])) + '</div>'
-  + '<div><h3>Ví dụ biển ghép (minh họa)</h3><div class="grid2">' + D.AUX_EXAMPLES.map(x => '<div class="stack">'+D.DIAG[x[0]]+'<div><b>'+esc(x[1])+'</b><div class="src" style="margin-top:4px">'+esc(x[2])+'</div></div></div>').join('') + '</div></div>'
+  + '<div><h3>Ví dụ biển ghép (minh họa)</h3><div class="grid2">' + D.AUX_EXAMPLES.map(x => '<div class="stack"><span class="pic">'+D.DIAG[x[0]]+'</span><div><b>'+esc(x[1])+'</b><div class="src" style="margin-top:4px">'+esc(x[2])+'</div>'+'<button class="pic-btn" type="button">Xem hình</button>'+'</div></div>').join('') + '</div></div>'
   + '<div class="note warn"><b>Dễ nhầm:</b> S.505a "Loại xe" thì biển chính CHỈ áp dụng cho loại xe vẽ trên biển phụ. S.H,6 "Except – Ngoại lệ" thì loại xe vẽ trên biển phụ ĐƯỢC MIỄN.</div>'
   + '<div><h3>Danh mục biển phụ</h3>' + table(['Mã','Tên','Tác dụng'], D.AUX_SIGNS.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),esc(r[2])])) + src('QCVN 41:2024 Điều 41, Phụ lục F') + '</div>'
   + '<div class="grid2"><div class="panel"><h3>Đèn tín hiệu</h3><div class="lights">' + D.LIGHTS.map(l => { const c = /Xanh|xanh/.test(l[0]) ? '#2E9D4A' : /Vàng/.test(l[0]) ? '#F2B600' : '#D2302A'; return '<div class="light"><span class="dot" style="background:'+c+'"></span><div><b>'+esc(l[0])+'</b>: '+esc(l[1])+'</div></div>'; }).join('') + '</div>'+src('Luật 36 Đ11 k4; QCVN 41:2024 Điều 6')+'</div>'
   + '<div class="panel"><h3>Hiệu lệnh của CSGT</h3>' + D.POLICE.map(p => '<p style="margin-bottom:8px"><b>'+esc(p[0])+':</b> '+esc(p[1])+'</p>').join('') + src('Luật 36 Đ11 k3') + '<h3 style="margin-top:14px">Nhường đường</h3>' + D.YIELD_RULES.map(p => '<p style="margin-bottom:6px"><b>'+esc(p[0])+':</b> '+esc(p[1])+'</p>').join('') + src('Luật 36 Đ15, Đ17, Đ22') + '</div></div>'
   + '<div class="note">Vạch kẻ đường có tab riêng kèm sơ đồ: <a href="#vach-ke">mở tab Vạch kẻ</a>. Các trường hợp "trừ khi…": <a href="#ngoai-le">mở tab Ngoại lệ</a>.</div>'
+  + '<div id="catalog"><h3>Danh mục đầy đủ theo QCVN 41:2024 ('+D.CATROWS.reduce((a,c)=>a+c.rows.length,0)+' mục)</h3><p class="src" style="margin-top:0">Mã và tên lấy nguyên văn từ danh mục của quy chuẩn; hình của phần lớn biển là hình đại diện theo nhóm (hình dạng, màu, mã), không phải hình thật.</p>'
+  + '<div class="search" style="margin-top:8px"><input id="cq" type="search" placeholder="Tìm mã hoặc tên biển: P.127, quay đầu, cầu hẹp…" aria-label="Tìm biển trong danh mục" autocomplete="off"><span class="count" id="ccnt" aria-live="polite"></span></div>'
+  + '<div class="chips" id="cg" role="group" aria-label="Lọc nhóm biển" style="margin:8px 0"></div><div class="cat" id="clist"></div></div>'
   + '</section>';
   const groups = [['P','Cấm'],['R','Hiệu lệnh'],['W','Nguy hiểm'],['I','Chỉ dẫn'],['all','Tất cả']];
   const sg = $('#sg');
   sg.innerHTML = groups.map(([k,n]) => '<button class="chip" type="button" data-g="'+k+'" aria-pressed="'+(state.g===k)+'">'+n+'</button>').join('');
   function render(){
     const list = D.SIGNS.filter(s => state.g==='all' || s[5]===state.g || (state.g==='P' && s[5]==='DP'));
-    $('#signs').innerHTML = list.map(s => '<div class="sign">'+(D.SVG[s[4]]||'')+'<div><div class="code">'+esc(s[0])+'</div><div class="nm">'+esc(s[1])+'</div><div class="mean">'+esc(s[2])+'</div>'+(s[3]?'<div class="fn">'+esc(s[3])+'</div>':'')+'</div></div>').join('');
+    $('#signs').innerHTML = list.map(s => '<div class="sign"><span class="pic">'+(D.SVG[s[4]]||'')+'</span><div><div class="code">'+esc(s[0])+'</div><div class="nm">'+esc(s[1])+'</div><div class="mean">'+esc(s[2])+'</div>'+(s[3]?'<div class="fn">'+esc(s[3])+'</div>':'')+'<button class="pic-btn" type="button">Xem hình</button>'+'</div></div>').join('');
   }
   sg.addEventListener('click', e => { const b = e.target.closest('.chip'); if(!b) return; state.g = b.dataset.g; store.set('lx_sg', state.g); sg.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c===b))); render(); });
   render();
+  const cst = { g: 'all', q: '' };
+  $('#cg').innerHTML = [['all','Tất cả']].concat(D.CATROWS.map(c=>[c.k, c.name])).map(([k,n])=>'<button class="chip" type="button" data-g="'+k+'" aria-pressed="'+(k==='all')+'">'+esc(n)+'</button>').join('');
+  function crender(){
+    const terms = fold(cst.q).split(/\\s+/).filter(Boolean); let n = 0;
+    const html = D.CATROWS.filter(c => cst.g==='all' || c.k===cst.g).map(c => c.rows.filter(r => { const h = fold(r[0]+' '+r[1]+' '+r[2]); return terms.every(t=>h.includes(t)); }).map(r => { n++; return '<div class="cat-row"><span class="pic">'+(D.CATI[r[3]]||'')+'</span><div class="cc">'+esc(r[0])+'</div><div><div class="cn">'+esc(r[1])+'</div>'+(r[2]?'<div class="cm">'+esc(r[2])+'</div>':'')+'</div></div>'; }).join('')).join('');
+    $('#clist').innerHTML = html || '<div class="panel">Không tìm thấy biển phù hợp.</div>'; $('#ccnt').textContent = n + ' mục';
+  }
+  $('#cq').addEventListener('input', e => { cst.q = e.target.value; crender(); });
+  $('#cg').addEventListener('click', e => { const b = e.target.closest('.chip'); if(!b) return; cst.g = b.dataset.g; $('#cg').querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed', String(c===b))); crender(); });
+  crender();
 }
 
 // ---------------- TỐC ĐỘ
@@ -361,7 +399,7 @@ function viewEmergency(){
 
 
 // ---------------- VẠCH KẺ
-const fig = (k) => '<figure class="fig">'+(D.DIAG[k]||'')+'<figcaption>'+esc(D.CAP[k]||'')+'</figcaption></figure>';
+const fig = (k) => '<figure class="fig"><div class="pic">'+(D.DIAG[k]||'')+'</div><figcaption>'+esc(D.CAP[k]||'')+' '+'<button class="pic-btn" type="button">Xem hình</button>'+'</figcaption></figure>';
 const mkClass = (c) => /^Cấm/.test(c) ? 'mk-no' : /^Được/.test(c) ? 'mk-ok' : 'mk-mid';
 function viewMarkings(){
   app.innerHTML = '<section class="view" aria-labelledby="h-mk">'
@@ -427,6 +465,27 @@ function viewHard(){
   render();
 }
 
+
+// ---------------- SỐ TỰ ĐỘNG
+function viewAT(){
+  app.innerHTML = '<section class="view" aria-labelledby="h-at">'
+  + '<div><h2 class="sec" id="h-at">Lái xe số tự động</h2><p class="lead">Nguyên tắc cần thành phản xạ. Mỗi mục ghi nguồn; mục chỉ là kinh nghiệm được ghi rõ.</p></div>'
+  + '<div class="note warn"><b>Ghi nhớ nhanh:</b> đổi số thì đạp phanh trước (P sang R đạp hết hành trình), gạt xong nhìn đồng hồ xác nhận số · chân trái để yên · lùi xe chỉ cần nhả phanh · xuống dốc dùng số thấp, không về N · đỗ xe phải có cả P và phanh tay.</div>'
+  + '<div><h3>Các vị trí cần số</h3>' + table(['Vị trí','Dùng khi nào'], D.AT_GEARS_EXTRA.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1])])) + '</div>'
+  + '<div class="grid2">' + D.AT_RULES.map((r,i)=>'<div class="panel"><div class="eyebrow">Nguyên tắc '+(i+1)+'</div><h3 style="margin-top:4px">'+esc(r.t)+'</h3><p style="font-size:14px">'+esc(r.d)+'</p><p class="src">'+esc(r.ref)+'</p></div>').join('') + '</div>'
+  + '<div><h3>Thao tác mẫu</h3>' + D.AT_ROUTINES.map((r,i)=>acc(r.name, steps(r.steps), i===0)).join('') + '</div>'
+  + '</section>';
+}
+// ---------------- TRUYỀN MIỆNG
+function viewSayings(){
+  const ok = (c) => /^Đúng/.test(c) ? 'mk-ok' : 'mk-mid';
+  app.innerHTML = '<section class="view" aria-labelledby="h-say">'
+  + '<div><h2 class="sec" id="h-say">Câu truyền miệng và lời đồn</h2><p class="lead">Những câu dễ nhớ mà thầy dạy lái, tài xế lâu năm hay nói, kèm đánh giá đúng sai và căn cứ.</p></div>'
+  + D.SAYINGS.map(g => '<div><h3>'+esc(g.grp)+'</h3>' + table(['Câu','Ý nghĩa','Đánh giá','Căn cứ'], g.rows.map(r=>['<b>'+esc(r[0])+'</b>',esc(r[1]),'<span class="'+ok(r[2])+'">'+esc(r[2])+'</span>',esc(r[3])])) + '</div>').join('')
+  + '<div><h3>Lời đồn sai hoặc chưa đúng hẳn</h3>' + table(['Lời đồn','Đánh giá','Sự thật','Căn cứ'], D.MYTHS.map(r=>['<b>'+esc(r[0])+'</b>','<span class="'+(/^Sai/.test(r[1])?'mk-no':'mk-mid')+'">'+esc(r[1])+'</span>',esc(r[2]),esc(r[3])])) + '</div>'
+  + '</section>';
+}
+
 // ---------------- KINH NGHIỆM
 function viewExp(){
   app.innerHTML = '<section class="view" aria-labelledby="h-exp">'
@@ -459,7 +518,7 @@ function viewSources(){
   + '</section>';
 }
 
-const VIEWS = { 'muc-phat': viewFines, 'bien-bao': viewSigns, 'vach-ke': viewMarkings, 'ngoai-le': viewExceptions, 'tinh-huong-kho': viewHard, 'tai-nan': viewAccident, 'toc-do': viewSpeed, 'ky-thuat': viewTech, 'tinh-huong': viewEmergency, 'kinh-nghiem': viewExp, 'checklist': viewCheck, 'nguon': viewSources };
+const VIEWS = { 'muc-phat': viewFines, 'bien-bao': viewSigns, 'vach-ke': viewMarkings, 'ngoai-le': viewExceptions, 'tinh-huong-kho': viewHard, 'so-tu-dong': viewAT, 'truyen-mieng': viewSayings, 'tai-nan': viewAccident, 'toc-do': viewSpeed, 'ky-thuat': viewTech, 'tinh-huong': viewEmergency, 'kinh-nghiem': viewExp, 'checklist': viewCheck, 'nguon': viewSources };
 function route(){
   const h = (location.hash || '').slice(1);
   const key = VIEWS[h] ? h : 'muc-phat';
@@ -468,6 +527,11 @@ function route(){
   document.querySelectorAll('nav.tabs a').forEach(a => { if(a.getAttribute('href') === '#'+key) { a.setAttribute('aria-current','page'); const n=a.parentElement; if(a.offsetLeft < n.scrollLeft || a.offsetLeft + a.offsetWidth > n.scrollLeft + n.clientWidth) n.scrollLeft = a.offsetLeft - 16; } else a.removeAttribute('aria-current'); });
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo(0,0); });
+const pt = document.getElementById('picToggle');
+function setDiscreet(on){ document.body.classList.toggle('discreet', on); pt.setAttribute('aria-pressed', String(!on)); pt.textContent = on ? 'Hiện hình' : 'Ẩn hình'; store.set('lx_discreet', on); }
+setDiscreet(store.get('lx_discreet', true));
+pt.addEventListener('click', () => setDiscreet(!document.body.classList.contains('discreet')));
+document.addEventListener('click', e => { const b = e.target.closest('.pic-btn'); if(!b) return; const box = b.closest('.fig,.sign,.stack'); if(!box) return; box.classList.toggle('show'); b.textContent = box.classList.contains('show') ? 'Ẩn hình' : 'Xem hình'; });
 route();
 })();
 </script>

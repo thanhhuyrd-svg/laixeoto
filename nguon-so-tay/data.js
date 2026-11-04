@@ -728,6 +728,12 @@ const SOURCES = [
   ['Tài xế vượt đèn đỏ để nhường đường cho xe cứu thương vẫn có thể bị phạt – Sức khỏe & Đời sống (19/9/2026)', 'suckhoedoisong.vn', 'https://suckhoedoisong.vn/tai-xe-vuot-den-do-de-nhuong-duong-cho-xe-cuu-thuong-van-co-the-bi-phat-169260918184500516.htm'],
   ['Vượt đèn đỏ để nhường đường xe cứu thương: không bị phạt vì lợi ích lớn – Tuổi Trẻ (16/1/2025)', 'tuoitre.vn', 'https://tuoitre.vn/vuot-den-do-de-nhuong-duong-xe-cuu-thuong-khong-bi-phat-vi-loi-ich-lon-20250116175053877.htm'],
   ['Cục CSGT đề xuất không cho mượn làn ngược chiều để vượt xe – VnExpress (28/7/2026)', 'vnexpress.net', 'https://vnexpress.net/cuc-csgt-de-xuat-khong-cho-muon-lan-nguoc-chieu-de-vuot-xe-5102515.html'],
+  ['Lái xe số tự động đúng cách – VnExpress (3/10/2014)', 'vnexpress.net', 'https://vnexpress.net/lai-xe-so-tu-dong-dung-cach-3087275.html'],
+  ['Kỹ năng đổ đèo để không mất phanh – VnExpress (21/10/2016, bài độc giả)', 'vnexpress.net', 'https://vnexpress.net/ky-nang-do-deo-de-khong-mat-phanh-2819810.html'],
+  ['Xe số tự động xuống dốc đi số nào để bảo vệ hộp số và phanh – Báo Quốc tế (28/5/2025)', 'baoquocte.vn', 'https://baoquocte.vn/xe-so-tu-dong-xuong-doc-di-so-nao-de-bao-ve-hop-so-va-phanh-315689.html'],
+  ['10 kinh nghiệm lái xe số tự động an toàn – oto.com.vn', 'oto.com.vn', 'https://oto.com.vn/kinh-nghiem-lai-xe/10-so-tu-dong-an-toan-ma-ai-cung-phai-nho-articleid-mizoxs8'],
+  ['Xe số tự động: những nguyên tắc đảm bảo an toàn cho tài mới – oto.com.vn', 'oto.com.vn', 'https://oto.com.vn/kinh-nghiem-lai-xe/so-tu-dong-nhung-nguyen-tac-dam-bao-an-toan-cho-tai-moi-articleid-8h65h22'],
+  ['Thứ tự các xe đi như thế nào là đúng quy tắc giao thông – oto.com.vn', 'oto.com.vn', 'https://oto.com.vn/thi-truong-o-to/thu-tu-cac-xe-di-nhu-the-nao-la-dung-quy-tac-giao-thong-articleid-8wyt9v1'],
   ['Kinh nghiệm giữ xe giữa làn – oto.com.vn', 'oto.com.vn', 'https://oto.com.vn/kinh-nghiem-lai-xe/o-to-cho-nguoi-moi-cach-de-o-to-luon-o-chinh-giua-lan-duong-articleid-vjozod3'],
   ['Hai cách đỗ xe cơ bản cho tài xế mới – VnExpress', 'vnexpress.net', 'https://vnexpress.net/hai-cach-do-xe-co-ban-cho-tai-xe-moi-4861253.html'],
 ];
@@ -744,6 +750,8 @@ const LIMITS = [
   'Thông tư 72/2024/TT-BCA không quy định rõ việc có được di chuyển xe khỏi hiện trường trong vụ va chạm nhỏ; sổ tay khuyến nghị chỉ di chuyển sau khi đã lưu chứng cứ và được công an hoặc bảo hiểm đồng ý (căn cứ NĐ 67/2023 Đ12 k1b).',
   'Sơ đồ vạch kẻ, biển phụ và tình huống là hình vẽ minh họa do sổ tay tự dựng theo nội dung quy chuẩn, không phải ảnh chụp thực tế.',
   'Phần tình huống khó: các kết luận gắn nhãn "theo hướng dẫn của cơ quan CSGT" dựa trên phát biểu của Cục CSGT, Công an TP.HCM được báo chí đưa lại, không phải văn bản quy phạm; định nghĩa tình thế cấp thiết (Luật XLVPHC khoản 11 Điều 2) cũng lấy qua báo chí, chưa đối chiếu được văn bản luật gốc. Việc có bị phạt hay không trong từng vụ cụ thể do cơ quan có thẩm quyền xác minh.',
+  'Danh mục biển báo lấy từ bản QCVN 41:2024 đăng trên LuatVietnam; hình của phần lớn biển trong danh mục là hình đại diện theo nhóm (hình dạng, màu nhóm, mã biển), không phải hình vẽ thật. Ý nghĩa biển chỉ dẫn trên cao tốc (IE) chưa được tóm lược đầy đủ.',
+  'Phần số tự động: các mẹo kick-down, Auto Hold, phanh tay điện, kéo xe hỏng không có trong các nguồn đã đọc, được ghi là kinh nghiệm phổ biến hoặc theo sách hướng dẫn của xe. Hai trang oto.com.vn chỉ đọc được qua bản tóm tắt. Câu "Nhất sớm, nhì tiên, tam đèn, tứ hướng" cũng chỉ đọc qua bản tóm tắt, ngoài thực tế có nhiều dị bản.',
   'Sổ tay mang tính tham khảo, không thay thế văn bản pháp luật gốc. Mức phạt cụ thể trong khung do người có thẩm quyền quyết định.',
 ];
 

@@ -78,4 +78,22 @@ function auxSvg(t = '6h–9h') {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" role="img" aria-label="Biển phụ ${t}"><rect x="3" y="3" width="94" height="44" fill="${WHT}" stroke="${BLK}" stroke-width="3"/>${`<text x="50" y="27" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="${BLK}" text-anchor="middle" dominant-baseline="central">${t}</text>`}</svg>`;
 }
 
-module.exports = { signSvg, auxSvg, ICONS, GROUP_ICONS };
+
+// Hình đại diện theo nhóm (dùng khi chưa vẽ riêng): hình dạng, màu nhóm + mã biển
+function genericSvg(code, label = '') {
+  const c = String(code).replace(/\s*\(.*\)/, '');
+  const t = (y, size, fill) => `<text x="50" y="${y}" font-family="Arial, Helvetica, sans-serif" font-size="${size}" font-weight="700" fill="${fill}" text-anchor="middle" dominant-baseline="central">${c}</text>`;
+  const fs = c.length > 6 ? 15 : 17;
+  let inner;
+  if (/^DP/.test(c)) inner = `<circle cx="50" cy="50" r="46" fill="${WHT}" stroke="${BLK}" stroke-width="3"/><line x1="22" y1="78" x2="78" y2="22" stroke="${BLK}" stroke-width="3"/>` + t(50, fs, BLK);
+  else if (/^P/.test(c)) inner = `<circle cx="50" cy="50" r="46" fill="${WHT}" stroke="${RED}" stroke-width="9"/>` + t(50, fs, BLK);
+  else if (/^R\.122/.test(c)) inner = ICONS.r122();
+  else if (/^R/.test(c)) inner = `<circle cx="50" cy="50" r="46" fill="${BLUE}"/>` + t(50, fs, WHT);
+  else if (/^W/.test(c)) inner = `<path d="M50 6 L95 88 L5 88 Z" fill="${YEL}" stroke="${RED}" stroke-width="7" stroke-linejoin="round"/>` + t(64, fs - 2, BLK);
+  else if (/^IE/.test(c)) inner = `<rect x="6" y="14" width="88" height="72" rx="6" fill="${GRN}"/>` + t(50, fs, WHT);
+  else if (/^I/.test(c)) inner = `<rect x="6" y="6" width="88" height="88" rx="6" fill="${BLUE}"/>` + t(50, fs, WHT);
+  else inner = `<rect x="4" y="26" width="92" height="48" fill="${WHT}" stroke="${BLK}" stroke-width="3"/>` + t(50, fs, BLK);
+  return wrap(inner, label || c);
+}
+
+module.exports = { signSvg, auxSvg, genericSvg, ICONS, GROUP_ICONS };
